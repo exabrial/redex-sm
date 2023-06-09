@@ -4,8 +4,11 @@ An improved Tomcat SessionManager that uses Redis via Redisson, with native encr
 
 ## Motivation
 
-This is an alternative to https://redisson.org/articles/redis-based-tomcat-session-management.html and offers several improvements
+This is an alternative to:
+* https://redisson.org/articles/redis-based-tomcat-session-management.html
+* https://github.com/magro/memcached-session-manager
 
+This project offers several improvements and better performance/scalability than the above projects. Another goal is to create a more modern and simpler codebase so community contributions and/or extensions are easier.
 
 ## Theory of operation
 
