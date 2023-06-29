@@ -55,7 +55,7 @@ import com.github.exabrial.redexsm.listeners.SessionEvictionListener;
 import com.github.exabrial.redexsm.model.SessionDestructionMessage;
 import com.github.exabrial.redexsm.model.SessionEvictionMessage;
 
-public class ImprovedRedissonSessionManager extends ManagerBase {
+public class ImprovedRedisSessionManager extends ManagerBase {
 	public static final String REDEX_NODE_ID = "redex:nodeId";
 	public static final String REDEX_SESSION_ID = "redex:sessionId";
 	public static final String REDEX_UID = "redex:uid";
@@ -63,7 +63,7 @@ public class ImprovedRedissonSessionManager extends ManagerBase {
 	public static final String SESSION_EVICTION = "sessionEviction";
 
 	private static final String JSESSIONID = "JSESSIONID";
-	private static final Logger log = LoggerFactory.getLogger(ImprovedRedissonSessionManager.class);
+	private static final Logger log = LoggerFactory.getLogger(ImprovedRedisSessionManager.class);
 	private Codec codec;
 	private RedissonClient redisson;
 	private SessionDestructionListener sessionDestructionListener;
@@ -86,12 +86,11 @@ public class ImprovedRedissonSessionManager extends ManagerBase {
 			final String sessionId = toSessionId(request, response);
 			if (sessionId != null) {
 				try {
-					final ImprovedRedissonSession session = (ImprovedRedissonSession) super.findSession(sessionId);
+					final ImprovedRedisSession session = (ImprovedRedisSession) super.findSession(sessionId);
 					if (session != null) {
 						final RBatch rBatch = createRBatch();
 						final RMapAsync<String, Object> rMapAsync = getRMapAsync(rBatch, sessionId);
-						rMapAsync.deleteAsync();
-						rMapAsync.touchAsync();
+						rMapAsync.clearAsync();
 						session.store(rMapAsync);
 						rMapAsync.fastPutAsync(REDEX_NODE_ID, nodeId);
 						final String remoteUser = request.getRemoteUser();
@@ -101,6 +100,7 @@ public class ImprovedRedissonSessionManager extends ManagerBase {
 						rMapAsync.fastPutAsync(REDEX_SESSION_ID, sessionId);
 						rMapAsync.expireAsync(Duration.of(sessionTimeoutMins, ChronoUnit.MINUTES));
 						getRTopicAsync(rBatch, SESSION_EVICTION).publishAsync(new SessionEvictionMessage(nodeId, sessionId));
+						rMapAsync.touchAsync();
 						log.trace("requestComplete() executing batch update: publishing session and eviction notice to topic for sessionId:{}",
 								sessionId);
 						rBatch.execute();
@@ -121,7 +121,7 @@ public class ImprovedRedissonSessionManager extends ManagerBase {
 	public void destroySession(final String sessionId) {
 		log.trace("destroySession() sessionId:{}", sessionId);
 		try {
-			final ImprovedRedissonSession session = (ImprovedRedissonSession) findSession(sessionId);
+			final ImprovedRedisSession session = (ImprovedRedisSession) super.findSession(sessionId);
 			if (session != null) {
 				session.expire(true);
 			}
@@ -133,7 +133,7 @@ public class ImprovedRedissonSessionManager extends ManagerBase {
 	@Override
 	public Session createEmptySession() {
 		log.trace("createEmptySession()");
-		return new ImprovedRedissonSession(this);
+		return new ImprovedRedisSession(this);
 	}
 
 	@Override
@@ -150,26 +150,32 @@ public class ImprovedRedissonSessionManager extends ManagerBase {
 	@Override
 	public Session findSession(final String id) throws IOException {
 		log.trace("findSession() id:{}", id);
-		ImprovedRedissonSession session = (ImprovedRedissonSession) super.findSession(id);
-		if (session == null && id != null) {
-			log.trace("findSession() local cache miss. Trying redis...");
-			final RMap<String, Object> rmap = getRMap(id);
-			if (rmap.isExists()) {
-				log.trace("findSession() session located in redis");
-				session = (ImprovedRedissonSession) createEmptySession();
-				session.load(rmap);
-				session.setAttribute(REDEX_NODE_ID, nodeId);
-				session.setId(id, true);
-			} else {
-				log.trace("findSession() redis cache miss too; giving up");
+		ImprovedRedisSession session;
+		if (id != null) {
+			session = (ImprovedRedisSession) super.findSession(id);
+			if (session == null) {
+				log.trace("findSession() local cache miss. Trying redis...");
+				final RMap<String, Object> rmap = getRMap(id);
+				if (rmap.isExists()) {
+					log.trace("findSession() session located in redis");
+					session = (ImprovedRedisSession) createEmptySession();
+					session.load(rmap);
+					session.setAttribute(REDEX_NODE_ID, nodeId);
+					session.setId(id, true);
+					rmap.touchAsync();
+				} else {
+					log.trace("findSession() redis cache miss too; giving up");
+				}
 			}
+		} else {
+			session = null;
 		}
 		return session;
 	}
 
 	@Override
 	protected void startInternal() throws LifecycleException {
-		log.info("startInternal() starting ImprovedRedissonSessionManager");
+		log.info("startInternal() starting ImprovedRedisSessionManager");
 		super.startInternal();
 		try {
 			redisson = buildClient();
@@ -203,7 +209,7 @@ public class ImprovedRedissonSessionManager extends ManagerBase {
 
 	@Override
 	protected void stopInternal() throws LifecycleException {
-		log.info("stopInternal() stopping ImprovedRedissonSessionManager nodeId:{}", nodeId);
+		log.info("stopInternal() stopping ImprovedRedisSessionManager nodeId:{}", nodeId);
 		super.stopInternal();
 		setState(LifecycleState.STOPPING);
 		try {
@@ -367,6 +373,6 @@ public class ImprovedRedissonSessionManager extends ManagerBase {
 
 	@Override
 	public String getName() {
-		return ImprovedRedissonSessionManager.class.getName();
+		return ImprovedRedisSessionManager.class.getName();
 	}
 }

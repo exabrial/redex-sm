@@ -24,7 +24,7 @@ import java.util.Set;
 import org.apache.catalina.session.StandardSession;
 import org.redisson.api.RMapAsync;
 
-public class ImprovedRedissonSession extends StandardSession {
+public class ImprovedRedisSession extends StandardSession {
 	private static final long serialVersionUID = 1L;
 
 	public static final String REDEX_AUTHTYPE_ATTR = "redex:session:authtype";
@@ -39,7 +39,7 @@ public class ImprovedRedissonSession extends StandardSession {
 	protected Map<String, Object> attributeMap;
 
 	@SuppressWarnings("unchecked")
-	protected ImprovedRedissonSession(final ImprovedRedissonSessionManager manager) {
+	protected ImprovedRedisSession(final ImprovedRedisSessionManager manager) {
 		super(manager);
 		try {
 			final Field attributeMapField = StandardSession.class.getDeclaredField("attributes");

@@ -94,7 +94,7 @@ See the pom.xml. Any library marked as `compile` scope must be present on the cl
 <?xml version="1.0" encoding="UTF-8"?>
 <Context>
 	<Manager
-		className="com.github.exabrial.redexsm.ImprovedRedissonSessionManager"
+		className="com.github.exabrial.redexsm.ImprovedRedisSessionManager"
 		configPath="${catalina.base}/conf/redisson.conf.yaml"
 		ignorePattern="(?:^.*\/javax\.faces\.resource\/.*$)|(?:^.*\.(ico|svg|png|gif|jpg|jpeg|css|js|tts|otf|woff|woff2|eot)$)" />
 </Context>

@@ -24,10 +24,10 @@ import org.apache.catalina.connector.Response;
 import org.apache.catalina.valves.ValveBase;
 
 public class SessionReplicationValve extends ValveBase {
-	private final ImprovedRedissonSessionManager improvedRedissonSessionManager;
+	private final ImprovedRedisSessionManager improvedRedisSessionManager;
 
-	public SessionReplicationValve(final ImprovedRedissonSessionManager improvedRedissonSessionManager) {
-		this.improvedRedissonSessionManager = improvedRedissonSessionManager;
+	public SessionReplicationValve(final ImprovedRedisSessionManager improvedRedisSessionManager) {
+		this.improvedRedisSessionManager = improvedRedisSessionManager;
 	}
 
 	@Override
@@ -36,10 +36,10 @@ public class SessionReplicationValve extends ValveBase {
 			return;
 		} else {
 			try {
-				improvedRedissonSessionManager.requestStarted(request, response);
+				improvedRedisSessionManager.requestStarted(request, response);
 				getNext().invoke(request, response);
 			} finally {
-				improvedRedissonSessionManager.requestComplete(request, response);
+				improvedRedisSessionManager.requestComplete(request, response);
 			}
 		}
 	}

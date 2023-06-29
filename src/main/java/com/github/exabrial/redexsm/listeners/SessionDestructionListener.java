@@ -17,20 +17,20 @@ package com.github.exabrial.redexsm.listeners;
 
 import org.redisson.api.listener.MessageListener;
 
-import com.github.exabrial.redexsm.ImprovedRedissonSessionManager;
+import com.github.exabrial.redexsm.ImprovedRedisSessionManager;
 import com.github.exabrial.redexsm.model.SessionDestructionMessage;
 
 public class SessionDestructionListener implements MessageListener<SessionDestructionMessage> {
-	private final ImprovedRedissonSessionManager improvedRedissonSessionManager;
+	private final ImprovedRedisSessionManager improvedRedisSessionManager;
 
-	public SessionDestructionListener(final ImprovedRedissonSessionManager improvedRedissonSessionManager) {
-		this.improvedRedissonSessionManager = improvedRedissonSessionManager;
+	public SessionDestructionListener(final ImprovedRedisSessionManager improvedRedisSessionManager) {
+		this.improvedRedisSessionManager = improvedRedisSessionManager;
 	}
 
 	@Override
 	public void onMessage(final CharSequence channel, final SessionDestructionMessage msg) {
-		if (!msg.sourceNodeId.equals(improvedRedissonSessionManager.getNodeId())) {
-			improvedRedissonSessionManager.destroySession(msg.sessionId);
+		if (!msg.sourceNodeId.equals(improvedRedisSessionManager.getNodeId())) {
+			improvedRedisSessionManager.destroySession(msg.sessionId);
 		}
 	}
 }

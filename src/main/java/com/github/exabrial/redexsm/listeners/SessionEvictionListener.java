@@ -17,20 +17,20 @@ package com.github.exabrial.redexsm.listeners;
 
 import org.redisson.api.listener.MessageListener;
 
-import com.github.exabrial.redexsm.ImprovedRedissonSessionManager;
+import com.github.exabrial.redexsm.ImprovedRedisSessionManager;
 import com.github.exabrial.redexsm.model.SessionEvictionMessage;
 
 public class SessionEvictionListener implements MessageListener<SessionEvictionMessage> {
-	private final ImprovedRedissonSessionManager improvedRedissonSessionManager;
+	private final ImprovedRedisSessionManager improvedRedisSessionManager;
 
-	public SessionEvictionListener(final ImprovedRedissonSessionManager improvedRedissonSessionManager) {
-		this.improvedRedissonSessionManager = improvedRedissonSessionManager;
+	public SessionEvictionListener(final ImprovedRedisSessionManager improvedRedisSessionManager) {
+		this.improvedRedisSessionManager = improvedRedisSessionManager;
 	}
 
 	@Override
 	public void onMessage(final CharSequence channel, final SessionEvictionMessage msg) {
-		if (!msg.sourceNodeId.equals(improvedRedissonSessionManager.getNodeId())) {
-			improvedRedissonSessionManager.evictSession(msg.sessionId);
+		if (!msg.sourceNodeId.equals(improvedRedisSessionManager.getNodeId())) {
+			improvedRedisSessionManager.evictSession(msg.sessionId);
 		}
 	}
 }
