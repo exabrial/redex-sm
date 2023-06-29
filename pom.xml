@@ -52,7 +52,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.redisson</groupId>
-			<artifactId>redisson</artifactId>
+			<artifactId>redisson-all</artifactId>
 			<version>3.22.1</version>
 			<scope>compile</scope>
 		</dependency>
