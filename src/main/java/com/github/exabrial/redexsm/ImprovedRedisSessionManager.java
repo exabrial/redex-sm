@@ -15,12 +15,10 @@
  */
 package com.github.exabrial.redexsm;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -34,48 +32,27 @@ import org.apache.catalina.Valve;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.apache.catalina.session.ManagerBase;
-import org.redisson.Redisson;
-import org.redisson.api.BatchOptions;
-import org.redisson.api.BatchOptions.ExecutionMode;
-import org.redisson.api.RBatch;
-import org.redisson.api.RMap;
-import org.redisson.api.RMapAsync;
-import org.redisson.api.RTopic;
-import org.redisson.api.RTopicAsync;
-import org.redisson.api.RedissonClient;
-import org.redisson.client.codec.Codec;
-import org.redisson.client.codec.StringCodec;
-import org.redisson.codec.CompositeCodec;
-import org.redisson.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.exabrial.redexsm.listeners.SessionDestructionListener;
-import com.github.exabrial.redexsm.listeners.SessionEvictionListener;
-import com.github.exabrial.redexsm.model.SessionDestructionMessage;
-import com.github.exabrial.redexsm.model.SessionEvictionMessage;
+import com.github.exabrial.redexsm.model.SessionChangeset;
 
-public class ImprovedRedisSessionManager extends ManagerBase {
-	public static final String REDEX_NODE_ID = "redex:nodeId";
-	public static final String REDEX_SESSION_ID = "redex:sessionId";
+public class ImprovedRedisSessionManager extends ManagerBase implements SessionRemover {
 	public static final String REDEX_UID = "redex:uid";
 	public static final String SESSION_DESTRUCTION = "sessionDestruction";
 	public static final String SESSION_EVICTION = "sessionEviction";
 
 	private static final String JSESSIONID = "JSESSIONID";
 	private static final Logger log = LoggerFactory.getLogger(ImprovedRedisSessionManager.class);
-	private Codec codec;
-	private RedissonClient redisson;
-	private SessionDestructionListener sessionDestructionListener;
-	private SessionEvictionListener sessionEvictionListener;
+	private JedisRedisService redisService;
 	private Valve valve;
 
-	private String configPath;
-	private Pattern ignorePattern;
-	private String keyPrefix;
-	private String nodeId;
-	private String sessionCookieName;
-	private int sessionTimeoutMins;
+	protected String redisUrl;
+	protected Pattern ignorePattern;
+	protected String keyPrefix;
+	protected String nodeId;
+	protected String sessionCookieName;
+	protected long sessionTimeoutSeconds;
 
 	public void requestStarted(final Request request, final Response response) {
 	}
@@ -88,24 +65,17 @@ public class ImprovedRedisSessionManager extends ManagerBase {
 				try {
 					final ImprovedRedisSession session = (ImprovedRedisSession) super.findSession(sessionId);
 					if (session != null) {
-						final RBatch rBatch = createRBatch();
-						final RMapAsync<String, Object> rMapAsync = getRMapAsync(rBatch, sessionId);
-						rMapAsync.clearAsync();
-						session.store(rMapAsync);
-						rMapAsync.fastPutAsync(REDEX_NODE_ID, nodeId);
+						final SessionChangeset sessionChangeset = new SessionChangeset(sessionId, nodeId, sessionTimeoutSeconds);
+						session.store(sessionChangeset);
 						final String remoteUser = request.getRemoteUser();
 						if (remoteUser != null) {
-							rMapAsync.fastPutAsync(REDEX_UID, remoteUser);
+							sessionChangeset.put(REDEX_UID, remoteUser);
 						}
-						rMapAsync.fastPutAsync(REDEX_SESSION_ID, sessionId);
-						rMapAsync.expireAsync(Duration.of(sessionTimeoutMins, ChronoUnit.MINUTES));
-						getRTopicAsync(rBatch, SESSION_EVICTION).publishAsync(new SessionEvictionMessage(nodeId, sessionId));
-						rMapAsync.touchAsync();
 						log.trace("requestComplete() executing batch update: publishing session and eviction notice to topic for sessionId:{}",
 								sessionId);
-						rBatch.execute();
+						redisService.publishChangeset(sessionChangeset);
 					}
-				} catch (final IOException e) {
+				} catch (final Exception e) {
 					log.error("requestComplete() caught exception", e);
 					throw new RuntimeException(e);
 				}
@@ -113,11 +83,13 @@ public class ImprovedRedisSessionManager extends ManagerBase {
 		}
 	}
 
+	@Override
 	public void evictSession(final String sessionId) {
 		log.trace("evictSession() sessionId:{}", sessionId);
 		sessions.remove(sessionId);
 	}
 
+	@Override
 	public void destroySession(final String sessionId) {
 		log.trace("destroySession() sessionId:{}", sessionId);
 		try {
@@ -140,11 +112,11 @@ public class ImprovedRedisSessionManager extends ManagerBase {
 	public void remove(final Session session, final boolean update) {
 		log.trace("remove() session.id:{} update:{}", session.getId(), update);
 		super.remove(session, update);
-		final RBatch rBatch = createRBatch();
-		getRMapAsync(rBatch, session.getId()).deleteAsync();
-		final RTopicAsync sessionDestructionTopic = getRTopicAsync(rBatch, SESSION_DESTRUCTION);
-		sessionDestructionTopic.publishAsync(new SessionDestructionMessage(nodeId, session.getId()));
-		rBatch.execute();
+		// final RBatch rBatch = createRBatch();
+		// getRMapAsync(rBatch, session.getId()).deleteAsync();
+		// final RTopicAsync sessionDestructionTopic = getRTopicAsync(rBatch, SESSION_DESTRUCTION);
+		// sessionDestructionTopic.publishAsync(new SessionDestructionMessage(nodeId, session.getId()));
+		// rBatch.execute();
 	}
 
 	@Override
@@ -155,16 +127,14 @@ public class ImprovedRedisSessionManager extends ManagerBase {
 			session = (ImprovedRedisSession) super.findSession(id);
 			if (session == null) {
 				log.trace("findSession() local cache miss. Trying redis...");
-				final RMap<String, Object> rmap = getRMap(id);
-				if (rmap.isExists()) {
+				final Map<String, Object> sessionMap = redisService.loadSessionMap(id, getContext());
+				if (sessionMap != null) {
 					log.trace("findSession() session located in redis");
 					session = (ImprovedRedisSession) createEmptySession();
-					session.load(rmap);
-					session.setAttribute(REDEX_NODE_ID, nodeId);
+					session.load(sessionMap);
 					session.setId(id, true);
-					rmap.touchAsync();
 				} else {
-					log.trace("findSession() redis cache miss too; giving up");
+					log.trace("findSession() redis miss; giving up");
 				}
 			}
 		} else {
@@ -177,29 +147,24 @@ public class ImprovedRedisSessionManager extends ManagerBase {
 	protected void startInternal() throws LifecycleException {
 		log.info("startInternal() starting ImprovedRedisSessionManager");
 		super.startInternal();
+		setState(LifecycleState.STARTING);
 		try {
-			redisson = buildClient();
 			installValve();
-			if (codec == null) {
-				final Codec encryptionCodec = new EncryptedSerializationCodec();
-				codec = new CompositeCodec(StringCodec.INSTANCE, encryptionCodec, encryptionCodec);
-			}
 			final String contextCookieName = getContext().getSessionCookieName();
 			if (contextCookieName == null) {
 				sessionCookieName = JSESSIONID;
 			} else {
 				sessionCookieName = contextCookieName;
 			}
-			sessionTimeoutMins = getContext().getSessionTimeout();
+			sessionTimeoutSeconds = getContext().getSessionTimeout() * 60L;
 			if (keyPrefix == null) {
 				keyPrefix = getContext().getName().replaceFirst("/", "").replace("/", ":");
 			}
 			if (nodeId == null) {
 				nodeId = getHostName() + ":" + keyPrefix + ":" + UUID.randomUUID();
 			}
-			addSessionEvictionListener();
-			addSessionDestructionListener();
-			setState(LifecycleState.STARTING);
+			redisService = new JedisRedisService(redisUrl, keyPrefix);
+			redisService.start(this);
 		} catch (final Exception e) {
 			log.error("startInternal() exception", e);
 			throw new LifecycleException(e);
@@ -214,36 +179,12 @@ public class ImprovedRedisSessionManager extends ManagerBase {
 		setState(LifecycleState.STOPPING);
 		try {
 			uninstallValve();
-			removeSessionEvictionListener();
-			removeSessionDestructionListener();
-			redisson.shutdown();
+			redisService.close();
 		} catch (final Exception e) {
 			log.error("stopInternal() exception", e);
 			throw new LifecycleException(e);
 		}
 		log.info("stopInternal() complete.");
-	}
-
-	protected void addSessionDestructionListener() {
-		final RTopic sessionDestructionTopic = getRTopic(SESSION_DESTRUCTION);
-		sessionDestructionListener = new SessionDestructionListener(this);
-		sessionDestructionTopic.addListener(SessionDestructionMessage.class, sessionDestructionListener);
-	}
-
-	protected void removeSessionDestructionListener() {
-		final RTopic sessionDestructionTopic = getRTopic(SESSION_DESTRUCTION);
-		sessionDestructionTopic.removeListenerAsync(sessionDestructionListener);
-	}
-
-	protected void addSessionEvictionListener() {
-		final RTopic sessionEvictionTopic = getRTopic(SESSION_EVICTION);
-		sessionEvictionListener = new SessionEvictionListener(this);
-		sessionEvictionTopic.addListener(SessionEvictionMessage.class, sessionEvictionListener);
-	}
-
-	protected void removeSessionEvictionListener() {
-		final RTopic sessionEvictionTopic = getRTopic(SESSION_EVICTION);
-		sessionEvictionTopic.removeListenerAsync(sessionEvictionListener);
 	}
 
 	protected String getHostName() {
@@ -282,35 +223,6 @@ public class ImprovedRedisSessionManager extends ManagerBase {
 		}
 	}
 
-	protected RedissonClient buildClient() throws IOException {
-		final Config config = Config.fromYAML(new File(configPath), getClass().getClassLoader());
-		return Redisson.create(config);
-	}
-
-	protected RBatch createRBatch() {
-		return redisson.createBatch(BatchOptions.defaults().executionMode(ExecutionMode.IN_MEMORY_ATOMIC));
-	}
-
-	protected RMapAsync<String, Object> getRMapAsync(final RBatch rBatch, final String sessionId) {
-		final String name = keyPrefix + ":redex:tomcat_session:" + sessionId;
-		return rBatch.getMap(name, codec);
-	}
-
-	protected RTopicAsync getRTopicAsync(final RBatch rBatch, final String name) {
-		final String topicNmae = keyPrefix + ":redex:tomcat_session_updates:" + getContext().getName() + ":" + name;
-		return rBatch.getTopic(topicNmae);
-	}
-
-	protected RMap<String, Object> getRMap(final String sessionId) {
-		final String name = keyPrefix + ":redex:tomcat_session:" + sessionId;
-		return redisson.getMap(name, codec);
-	}
-
-	protected RTopic getRTopic(final String name) {
-		final String topicNmae = keyPrefix + ":redex:tomcat_session_updates:" + getContext().getName() + ":" + name;
-		return redisson.getTopic(topicNmae);
-	}
-
 	protected String toSessionId(final Request request, final Response response) {
 		String sessionId;
 		final String setCookieHeader = response.getHeaders("Set-Cookie").stream()
@@ -335,8 +247,8 @@ public class ImprovedRedisSessionManager extends ManagerBase {
 		return sessionId;
 	}
 
-	public void setConfigPath(final String configPath) {
-		this.configPath = configPath;
+	public void setRedisUrl(final String redisUrl) {
+		this.redisUrl = redisUrl;
 	}
 
 	public void setIgnorePattern(final String ignorePattern) {
@@ -353,14 +265,6 @@ public class ImprovedRedisSessionManager extends ManagerBase {
 
 	public String getNodeId() {
 		return nodeId;
-	}
-
-	public Codec getCodec() {
-		return codec;
-	}
-
-	public void setCodec(final Codec codec) {
-		this.codec = codec;
 	}
 
 	@Override

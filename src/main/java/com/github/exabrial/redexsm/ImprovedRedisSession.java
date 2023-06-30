@@ -22,7 +22,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.catalina.session.StandardSession;
-import org.redisson.api.RMapAsync;
+
+import com.github.exabrial.redexsm.model.SessionChangeset;
 
 public class ImprovedRedisSession extends StandardSession {
 	private static final long serialVersionUID = 1L;
@@ -108,26 +109,26 @@ public class ImprovedRedisSession extends StandardSession {
 		}
 	}
 
-	protected void store(final RMapAsync<String, Object> rmap) {
+	protected void store(final SessionChangeset sessionChangeset) {
 		final List<String> sessionAttributeKeys = filterOutRedexAttributes(attributeMap.keySet());
 		for (final String key : sessionAttributeKeys) {
 			final Object value = attributeMap.get(key);
 			if (value != null) {
-				rmap.fastPutAsync(key, value);
+				sessionChangeset.put(key, value);
 			}
 		}
 		if (authType != null) {
-			rmap.fastPutAsync(REDEX_AUTHTYPE_ATTR, authType);
+			sessionChangeset.put(REDEX_AUTHTYPE_ATTR, authType);
 		}
-		rmap.fastPutAsync(REDEX_CREATION_TIME_ATTR, creationTime);
-		rmap.fastPutAsync(REDEX_IS_NEW_ATTR, isNew);
-		rmap.fastPutAsync(REDEX_IS_VALID_ATTR, isValid);
-		rmap.fastPutAsync(REDEX_LAST_ACCESSED_TIME_ATTR, lastAccessedTime);
-		rmap.fastPutAsync(REDEX_MAX_INACTIVE_INTERVAL_ATTR, maxInactiveInterval);
+		sessionChangeset.put(REDEX_CREATION_TIME_ATTR, creationTime);
+		sessionChangeset.put(REDEX_IS_NEW_ATTR, isNew);
+		sessionChangeset.put(REDEX_IS_VALID_ATTR, isValid);
+		sessionChangeset.put(REDEX_LAST_ACCESSED_TIME_ATTR, lastAccessedTime);
+		sessionChangeset.put(REDEX_MAX_INACTIVE_INTERVAL_ATTR, maxInactiveInterval);
 		if (principal != null) {
-			rmap.fastPutAsync(REDEX_PRINCIPAL_ATTR, principal);
+			sessionChangeset.put(REDEX_PRINCIPAL_ATTR, principal);
 		}
-		rmap.fastPutAsync(REDEX_THIS_ACCESSED_TIME_ATTR, thisAccessedTime);
+		sessionChangeset.put(REDEX_THIS_ACCESSED_TIME_ATTR, thisAccessedTime);
 	}
 
 	protected static final List<String> filterOutRedexAttributes(final Set<String> keySet) {
