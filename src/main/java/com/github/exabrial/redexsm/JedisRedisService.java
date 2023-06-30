@@ -16,17 +16,22 @@
 package com.github.exabrial.redexsm;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.catalina.Context;
+import org.apache.commons.lang3.ClassUtils;
 
+import com.github.exabrial.redexsm.model.CustomDataOutputStream;
 import com.github.exabrial.redexsm.model.CustomObjectInputStream;
 import com.github.exabrial.redexsm.model.SessionChangeset;
 
@@ -36,6 +41,11 @@ import redis.clients.jedis.Transaction;
 import redis.clients.jedis.UnifiedJedis;
 
 public class JedisRedisService implements Closeable {
+	protected static final List<String> plaintextAttributes = List.of(SessionChangeset.REDEX_NODE_ID, SessionChangeset.REDEX_SESSION_ID,
+			ImprovedRedisSessionManager.REDEX_UID, ImprovedRedisSession.REDEX_AUTHTYPE_ATTR, ImprovedRedisSession.REDEX_CREATION_TIME_ATTR,
+			ImprovedRedisSession.REDEX_IS_NEW_ATTR, ImprovedRedisSession.REDEX_IS_VALID_ATTR,
+			ImprovedRedisSession.REDEX_LAST_ACCESSED_TIME_ATTR, ImprovedRedisSession.REDEX_MAX_INACTIVE_INTERVAL_ATTR,
+			ImprovedRedisSession.REDEX_THIS_ACCESSED_TIME_ATTR);
 	private final String url;
 	private UnifiedJedis jedis;
 	private SessionRemover sessionRemover;
@@ -69,7 +79,7 @@ public class JedisRedisService implements Closeable {
 		try (final Transaction multi = jedis.multi()) {
 			final byte[] sessionKey = sessionChangeset.toEncodedSessionId(keyPrefix);
 			multi.del(sessionKey);
-			final Map<byte[], byte[]> encodedMap = sessionChangeset.toEncodedMap(encryptionSupport);
+			final Map<byte[], byte[]> encodedMap = toEncodedMap(encryptionSupport, sessionChangeset.getSessionMap());
 			multi.hset(sessionKey, encodedMap);
 			multi.expire(sessionKey, sessionChangeset.getExpirationInSeconds());
 			// getRTopicAsync(rBatch, SESSION_EVICTION).publishAsync(new SessionEvictionMessage(nodeId, sessionId));
@@ -157,6 +167,49 @@ public class JedisRedisService implements Closeable {
 				sessionMap = null;
 			}
 			return sessionMap;
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public Map<byte[], byte[]> toEncodedMap(final EncryptionSupport encryptionSupport, final Map<String, Object> changsetMap) {
+		try {
+			final Map<byte[], byte[]> redisMap = new HashMap<>();
+
+			for (final String key : changsetMap.keySet()) {
+				final byte[] encodedBytes;
+				final StringBuilder storageKey = new StringBuilder();
+				final Object value = changsetMap.get(key);
+				try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+					if (ClassUtils.isPrimitiveOrWrapper(value.getClass()) || value instanceof String) {
+						try (CustomDataOutputStream cdos = new CustomDataOutputStream(baos)) {
+							final char writeType = cdos.writeValue(value);
+							storageKey.append("d");
+							storageKey.append(writeType);
+							storageKey.append(":");
+							cdos.flush();
+						}
+					} else {
+						try (final ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+							storageKey.append("so:");
+							oos.writeObject(value);
+							oos.flush();
+						}
+					}
+					encodedBytes = baos.toByteArray();
+				}
+				if (plaintextAttributes.contains(key) || ClassUtils.isPrimitiveOrWrapper(value.getClass()) || value instanceof String) {
+					storageKey.append("pt:");
+					storageKey.append(key);
+					redisMap.put(storageKey.toString().getBytes(StandardCharsets.UTF_8), encodedBytes);
+				} else {
+					storageKey.append("ct:");
+					storageKey.append(key);
+					final byte[] encryptedBytes = encryptionSupport.encrypt(encodedBytes);
+					redisMap.put(storageKey.toString().getBytes(StandardCharsets.UTF_8), encryptedBytes);
+				}
+			}
+			return redisMap;
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
