@@ -13,18 +13,28 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Licence for the specific language governing permissions and limitations under the Licence.
  */
-package com.github.exabrial.redexsm.model;
+package com.github.exabrial.redexsm;
 
-import java.io.Serializable;
+/**
+ *
+ * Callback Handler from network sent session events. These methods should only operate on local caches and should not trigger any
+ * network I/O. These events will be sources from network events.
+ *
+ * @author jonathan.fisher
+ */
+public interface SessionRemover {
 
-public class SessionEvictionMessage extends SessionMessage implements Serializable {
-	private static final long serialVersionUID = 1L;
+	/**
+	 * Evict a session from the local cache. Take no further action.
+	 *
+	 * @param sessionId
+	 */
+	void evictSession(String sessionId);
 
-	public SessionEvictionMessage(final String sourceNodeId, final String sessionId) {
-		super(sourceNodeId, sessionId);
-	}
-
-	public SessionEvictionMessage(final byte[] fromBytes) {
-		super(fromBytes);
-	}
+	/**
+	 * Evict a session from the local cache, but also call the session destruction routines.
+	 *
+	 * @param sessionId
+	 */
+	void destroySession(String sessionId);
 }

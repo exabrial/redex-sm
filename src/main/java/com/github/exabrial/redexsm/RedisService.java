@@ -13,18 +13,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Licence for the specific language governing permissions and limitations under the Licence.
  */
-package com.github.exabrial.redexsm.model;
+package com.github.exabrial.redexsm;
 
-import java.io.Serializable;
+import java.util.Map;
 
-public class SessionEvictionMessage extends SessionMessage implements Serializable {
-	private static final long serialVersionUID = 1L;
+import org.apache.catalina.Context;
 
-	public SessionEvictionMessage(final String sourceNodeId, final String sessionId) {
-		super(sourceNodeId, sessionId);
-	}
+import com.github.exabrial.redexsm.model.SessionChangeset;
 
-	public SessionEvictionMessage(final byte[] fromBytes) {
-		super(fromBytes);
-	}
+public interface RedisService {
+
+	void start(SessionRemover sessionRemover);
+
+	void close();
+
+	void publishChangeset(SessionChangeset sessionChangeset);
+
+	void remove(String sessionId);
+
+	Map<String, Object> loadSessionMap(String sessionId, Context context);
 }
