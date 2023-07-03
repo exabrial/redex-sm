@@ -9,21 +9,21 @@ This project is an alternative to other Redis based Tomcat managers. We feel tha
 We've tried other Redis Based Tomcat Managers. We decided to write our own as we weren't super happy with the others.
 
 * memcached-session-manager
-  - https://github.com/magro/memcached-session-manager
-  - Venerable
-  - The OG
-  - Simple to use
-  - Not really updated anymore, forks contain updates but are scattered
-  - No encryption
+    - https://github.com/magro/memcached-session-manager
+    - Venerable
+    - The OG
+    - Simple to use
+    - Not really updated anymore, forks contain updates but are scattered
+    - No encryption
 * Redisson
-  - https://redisson.org/articles/redis-based-tomcat-session-management.html
-  - Commercially supported
-  - Well documented
-  - Very complicated
-  - Tons of dependencies
-  - Tons of threads
-  - Does not shade the `redisson-all` jar, so will cause major headaches and classpath conflicts (Jackson, SnakeYaml, Slf4j, others)
-  - No encryption
+    - https://redisson.org/articles/redis-based-tomcat-session-management.html
+    - Commercially supported
+    - Well documented
+    - Very complicated
+    - Tons of dependencies
+    - Tons of threads
+    - Does not shade the `redisson-all` jar, so will cause major headaches and classpath conflicts (Jackson, SnakeYaml, Slf4j, others)
+    - No encryption
 
 ## Theory of operation
 
