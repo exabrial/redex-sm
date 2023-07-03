@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Licence for the specific language governing permissions and limitations under the Licence.
  */
-package com.github.exabrial.redexsm;
+package com.github.exabrial.redexsm.jedis;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -30,11 +30,16 @@ import java.util.Map;
 import org.apache.catalina.Context;
 import org.apache.commons.lang3.ClassUtils;
 
+import com.github.exabrial.redexsm.ImprovedRedisSession;
+import com.github.exabrial.redexsm.ImprovedRedisSessionManager;
+import com.github.exabrial.redexsm.RedisService;
+import com.github.exabrial.redexsm.SessionRemover;
+import com.github.exabrial.redexsm.encryption.EncryptionSupport;
 import com.github.exabrial.redexsm.inboundevents.SessionDestructionListener;
 import com.github.exabrial.redexsm.inboundevents.SessionEvicitionListener;
-import com.github.exabrial.redexsm.model.AutoDataInputStream;
-import com.github.exabrial.redexsm.model.AutoDataOutputStream;
-import com.github.exabrial.redexsm.model.ClassloaderAwareObjectInputStream;
+import com.github.exabrial.redexsm.io.AutoDataInputStream;
+import com.github.exabrial.redexsm.io.AutoDataOutputStream;
+import com.github.exabrial.redexsm.io.ClassloaderAwareObjectInputStream;
 import com.github.exabrial.redexsm.model.SessionChangeset;
 import com.github.exabrial.redexsm.model.SessionDestructionMessage;
 import com.github.exabrial.redexsm.model.SessionEvictionMessage;
@@ -44,7 +49,7 @@ import redis.clients.jedis.JedisPooled;
 import redis.clients.jedis.Transaction;
 import redis.clients.jedis.UnifiedJedis;
 
-public class JedisRedisService implements Closeable {
+public class JedisRedisService implements Closeable, RedisService {
 	public static final String REDEX_SESSION_DESTRUCTION = "redex:sessionDestruction:";
 	public static final String REDEX_SESSION_EVICTION = "redex:sessionEviction:";
 	protected static final List<String> plaintextAttributes = List.of(SessionChangeset.REDEX_NODE_ID, SessionChangeset.REDEX_SESSION_ID,
@@ -67,6 +72,7 @@ public class JedisRedisService implements Closeable {
 		this.encryptionSupport = new EncryptionSupport(keyPassword);
 	}
 
+	@Override
 	public void start(final SessionRemover sessionRemover) {
 		final ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
 		poolConfig.setMinIdle(1);
@@ -90,6 +96,7 @@ public class JedisRedisService implements Closeable {
 		jedis = null;
 	}
 
+	@Override
 	public void publishChangeset(final SessionChangeset sessionChangeset) {
 		try (final Transaction multi = jedis.multi()) {
 			final byte[] sessionKey = sessionChangeset.toEncodedSessionId(keyPrefix);
@@ -103,6 +110,7 @@ public class JedisRedisService implements Closeable {
 		}
 	}
 
+	@Override
 	public void remove(final String sessionId) {
 		final byte[] sessionKey = SessionChangeset.toEncodedSessionId(keyPrefix, sessionId);
 		try (final Transaction multi = jedis.multi()) {
@@ -113,6 +121,7 @@ public class JedisRedisService implements Closeable {
 		}
 	}
 
+	@Override
 	public Map<String, Object> loadSessionMap(final String sessionId, final Context context) {
 		try {
 			final Map<String, Object> sessionMap;

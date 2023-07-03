@@ -35,14 +35,15 @@ import org.apache.catalina.session.ManagerBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.exabrial.redexsm.jedis.JedisRedisService;
 import com.github.exabrial.redexsm.model.SessionChangeset;
 
 public class ImprovedRedisSessionManager extends ManagerBase implements SessionRemover {
-	protected static final String REDEX_UID = "redex:uid";
+	public static final String REDEX_UID = "redex:uid";
 	protected static final String JSESSIONID = "JSESSIONID";
 	protected static final Logger log = LoggerFactory.getLogger(ImprovedRedisSessionManager.class);
 
-	private JedisRedisService redisService;
+	private RedisService redisService;
 	private Valve valve;
 
 	protected String keyPassword;
