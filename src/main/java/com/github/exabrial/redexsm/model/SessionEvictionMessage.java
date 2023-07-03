@@ -17,15 +17,14 @@ package com.github.exabrial.redexsm.model;
 
 import java.io.Serializable;
 
-public class SessionEvictionMessage implements Serializable {
+public class SessionEvictionMessage extends SessionMessage implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	public final String sourceNodeId;
-	public final String sessionId;
-
 	public SessionEvictionMessage(final String sourceNodeId, final String sessionId) {
-		super();
-		this.sourceNodeId = sourceNodeId;
-		this.sessionId = sessionId;
+		super(sourceNodeId, sessionId);
+	}
+
+	public SessionEvictionMessage(final byte[] fromBytes) {
+		super(fromBytes);
 	}
 }

@@ -15,9 +15,26 @@
  */
 package com.github.exabrial.redexsm;
 
+/**
+ *
+ * Callback Handler from network sent session events. These methods should only operate on local caches and should not trigger any
+ * network I/O. These events will be sources from network events.
+ *
+ * @author jonathan.fisher
+ */
 public interface SessionRemover {
 
+	/**
+	 * Evict a session from the local cache. Take no further action.
+	 *
+	 * @param sessionId
+	 */
 	void evictSession(String sessionId);
 
+	/**
+	 * Evict a session from the local cache, but also call the session destruction routines.
+	 *
+	 * @param sessionId
+	 */
 	void destroySession(String sessionId);
 }

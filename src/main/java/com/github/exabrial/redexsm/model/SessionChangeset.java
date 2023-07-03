@@ -55,4 +55,8 @@ public class SessionChangeset {
 	public static byte[] toEncodedSessionId(final String keyPrefix, final String sessionId) {
 		return (REDEX + keyPrefix + ":" + sessionId).getBytes(StandardCharsets.UTF_8);
 	}
+
+	public String getSessionId() {
+		return sessionId;
+	}
 }

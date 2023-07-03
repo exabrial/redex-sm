@@ -5,9 +5,9 @@
  * European Commission - subsequent versions of the EUPL (the "Licence");
  *
  * You may not use this work except in compliance with the Licence.
- * You may obtain a copy of the Licence at:
+ * You may obtain a copy of the Licence at->
  *
- * https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt
+ * https->//joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt
  *
  * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,52 +19,54 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class CustomDataOutputStream extends DataOutputStream {
-	public CustomDataOutputStream(final OutputStream out) {
+public class AutoDataOutputStream extends DataOutputStream {
+	public AutoDataOutputStream(final OutputStream out) {
 		super(out);
 	}
 
 	public char writeValue(final Object value) throws IOException {
 		final String name = value.getClass().getName();
-		switch (name) {
-			case "java.lang.Boolean": {
+		final char writtenType = switch (name) {
+			case "java.lang.Boolean" -> {
 				super.writeBoolean((boolean) value);
-				return 'Z';
+				yield 'Z';
 			}
-			case "java.lang.Byte": {
+			case "java.lang.Byte" -> {
 				super.writeByte((byte) value);
-				return 'B';
+				yield 'B';
 			}
-			case "java.lang.Char": {
+			case "java.lang.Char" -> {
 				super.writeChar((char) value);
-				return 'C';
+				yield 'C';
 			}
-			case "java.lang.Double": {
+			case "java.lang.Double" -> {
 				super.writeDouble((double) value);
-				return 'D';
+				yield 'D';
 			}
-			case "java.lang.Float": {
+			case "java.lang.Float" -> {
 				super.writeFloat((float) value);
-				return 'F';
+				yield 'F';
 			}
-			case "java.lang.Integer": {
+			case "java.lang.Integer" -> {
 				super.writeInt((int) value);
-				return 'I';
+				yield 'I';
 			}
-			case "java.lang.Long": {
+			case "java.lang.Long" -> {
 				super.writeLong((long) value);
-				return 'J';
+				yield 'J';
 			}
-			case "java.lang.Short": {
+			case "java.lang.Short" -> {
 				super.writeShort((short) value);
-				return 'S';
+				yield 'S';
 			}
-			case "java.lang.String": {
+			case "java.lang.String" -> {
 				super.writeUTF((String) value);
-				return 'T';
+				yield 'T';
 			}
-			default:
-				throw new IllegalArgumentException("Unexpected value: " + name);
-		}
+			default -> {
+				throw new IllegalArgumentException("Unexpected value-> " + name);
+			}
+		};
+		return writtenType;
 	}
 }

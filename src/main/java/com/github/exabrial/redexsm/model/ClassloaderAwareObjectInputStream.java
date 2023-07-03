@@ -23,10 +23,10 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CustomObjectInputStream extends ObjectInputStream {
+public class ClassloaderAwareObjectInputStream extends ObjectInputStream {
 	private final ClassLoader classLoader;
 
-	public CustomObjectInputStream(final ClassLoader classLoader, final InputStream in) throws IOException {
+	public ClassloaderAwareObjectInputStream(final ClassLoader classLoader, final InputStream in) throws IOException {
 		super(in);
 		this.classLoader = classLoader;
 	}

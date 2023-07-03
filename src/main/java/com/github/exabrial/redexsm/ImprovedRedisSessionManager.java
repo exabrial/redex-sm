@@ -39,8 +39,6 @@ import com.github.exabrial.redexsm.model.SessionChangeset;
 
 public class ImprovedRedisSessionManager extends ManagerBase implements SessionRemover {
 	public static final String REDEX_UID = "redex:uid";
-	public static final String SESSION_DESTRUCTION = "sessionDestruction";
-	public static final String SESSION_EVICTION = "sessionEviction";
 
 	private static final String JSESSIONID = "JSESSIONID";
 	private static final Logger log = LoggerFactory.getLogger(ImprovedRedisSessionManager.class);
@@ -112,11 +110,7 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 	public void remove(final Session session, final boolean update) {
 		log.trace("remove() session.id:{} update:{}", session.getId(), update);
 		super.remove(session, update);
-		// final RBatch rBatch = createRBatch();
-		// getRMapAsync(rBatch, session.getId()).deleteAsync();
-		// final RTopicAsync sessionDestructionTopic = getRTopicAsync(rBatch, SESSION_DESTRUCTION);
-		// sessionDestructionTopic.publishAsync(new SessionDestructionMessage(nodeId, session.getId()));
-		// rBatch.execute();
+		redisService.remove(session.getId());
 	}
 
 	@Override
@@ -163,7 +157,7 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 			if (nodeId == null) {
 				nodeId = getHostName() + ":" + keyPrefix + ":" + UUID.randomUUID();
 			}
-			redisService = new JedisRedisService(redisUrl, keyPrefix);
+			redisService = new JedisRedisService(redisUrl, keyPrefix, nodeId);
 			redisService.start(this);
 		} catch (final Exception e) {
 			log.error("startInternal() exception", e);
