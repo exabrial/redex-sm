@@ -25,6 +25,7 @@ We've tried other Redis Based Tomcat Managers. We decided to write our own as we
     - Does not shade the `redisson-all` jar, so will cause major headaches and classpath conflicts (Jackson, SnakeYaml, Slf4j, others)
     - No encryption
 
+
 ## Theory of operation
 
 This project operates much in the way of `after-request` mode of the `memcached-session-manager` project.
