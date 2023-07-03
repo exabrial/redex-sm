@@ -23,17 +23,21 @@ import java.util.Map;
 public class SessionChangeset {
 	public static final String REDEX_SESSION_ID = "redex:sessionId";
 	public static final String REDEX_NODE_ID = "redex:nodeId";
+	public static final String REDEX_UID = "redex:uid";
 
 	private static final String REDEX = "redex:";
 	protected final Map<String, Object> changsetMap = new HashMap<>();
 	protected final String sessionId;
 	protected final long expirationInSeconds;
 
-	public SessionChangeset(final String sessionId, final String nodeId, final long expirationInSeconds) {
+	public SessionChangeset(final String sessionId, final String nodeId, final long expirationInSeconds, final String remoteUser) {
 		this.sessionId = sessionId;
 		this.expirationInSeconds = expirationInSeconds;
 		changsetMap.put(REDEX_SESSION_ID, sessionId);
 		changsetMap.put(REDEX_NODE_ID, nodeId);
+		if (remoteUser != null) {
+			changsetMap.put(REDEX_UID, remoteUser);
+		}
 	}
 
 	public void put(final String key, final Object value) {

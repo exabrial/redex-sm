@@ -31,7 +31,6 @@ import org.apache.catalina.Context;
 import org.apache.commons.lang3.ClassUtils;
 
 import com.github.exabrial.redexsm.ImprovedRedisSession;
-import com.github.exabrial.redexsm.ImprovedRedisSessionManager;
 import com.github.exabrial.redexsm.RedisService;
 import com.github.exabrial.redexsm.SessionRemover;
 import com.github.exabrial.redexsm.encryption.EncryptionSupport;
@@ -53,7 +52,7 @@ public class JedisRedisService implements Closeable, RedisService {
 	public static final String REDEX_SESSION_DESTRUCTION = "redex:sessionDestruction:";
 	public static final String REDEX_SESSION_EVICTION = "redex:sessionEviction:";
 	protected static final List<String> plaintextAttributes = List.of(SessionChangeset.REDEX_NODE_ID, SessionChangeset.REDEX_SESSION_ID,
-			ImprovedRedisSessionManager.REDEX_UID, ImprovedRedisSession.REDEX_AUTHTYPE_ATTR, ImprovedRedisSession.REDEX_CREATION_TIME_ATTR,
+			SessionChangeset.REDEX_UID, ImprovedRedisSession.REDEX_AUTHTYPE_ATTR, ImprovedRedisSession.REDEX_CREATION_TIME_ATTR,
 			ImprovedRedisSession.REDEX_IS_NEW_ATTR, ImprovedRedisSession.REDEX_IS_VALID_ATTR,
 			ImprovedRedisSession.REDEX_LAST_ACCESSED_TIME_ATTR, ImprovedRedisSession.REDEX_MAX_INACTIVE_INTERVAL_ATTR,
 			ImprovedRedisSession.REDEX_THIS_ACCESSED_TIME_ATTR);

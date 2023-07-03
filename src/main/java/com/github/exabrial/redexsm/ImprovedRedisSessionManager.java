@@ -39,7 +39,6 @@ import com.github.exabrial.redexsm.jedis.JedisRedisService;
 import com.github.exabrial.redexsm.model.SessionChangeset;
 
 public class ImprovedRedisSessionManager extends ManagerBase implements SessionRemover {
-	public static final String REDEX_UID = "redex:uid";
 	protected static final String JSESSIONID = "JSESSIONID";
 	protected static final Logger log = LoggerFactory.getLogger(ImprovedRedisSessionManager.class);
 
@@ -65,12 +64,9 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 				try {
 					final ImprovedRedisSession session = (ImprovedRedisSession) super.findSession(sessionId);
 					if (session != null) {
-						final SessionChangeset sessionChangeset = new SessionChangeset(sessionId, nodeId, sessionTimeoutSeconds);
+						final SessionChangeset sessionChangeset = new SessionChangeset(sessionId, nodeId, sessionTimeoutSeconds,
+								request.getRemoteUser());
 						session.store(sessionChangeset);
-						final String remoteUser = request.getRemoteUser();
-						if (remoteUser != null) {
-							sessionChangeset.put(REDEX_UID, remoteUser);
-						}
 						log.trace("requestComplete() executing batch update: publishing session and eviction notice to topic for sessionId:{}",
 								sessionId);
 						redisService.publishChangeset(sessionChangeset);
