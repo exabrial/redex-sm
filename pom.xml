@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.exabrial</groupId>
 	<artifactId>redex-sm</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<description>redex-sm: An improved Tomcat SessionManager that uses Redis via Redisson, with native encryption support</description>
 	<name>${project.artifactId}</name>
@@ -13,7 +13,7 @@
 		<connection>scm:git:ssh://git@github.com/exabrial/exabrial/redex-sm.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/exabrial/redex-sm.git</developerConnection>
 		<url>https://github.com/exabrial/redex-sm/tree/master</url>
-		<tag>redex-sm-1.0.0</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<properties>
