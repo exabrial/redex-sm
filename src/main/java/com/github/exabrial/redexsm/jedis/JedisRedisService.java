@@ -75,10 +75,11 @@ public class JedisRedisService implements Closeable, RedisService {
 	public void start(final SessionRemover sessionRemover) {
 		final ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
 		poolConfig.setMinIdle(1);
-		poolConfig.setMaxIdle(3);
+		poolConfig.setMaxIdle(1);
 		poolConfig.setMaxTotal(15);
 		poolConfig.setMaxWait(Duration.of(5000, ChronoUnit.MILLIS));
 		poolConfig.setJmxEnabled(true);
+		poolConfig.setMinEvictableIdleTime(Duration.of(1, ChronoUnit.HOURS));
 		poolConfig.setBlockWhenExhausted(true);
 		this.jedis = new JedisPooled(poolConfig, url);
 		destructionListener = new SessionDestructionListener(sessionRemover, jedis, REDEX_SESSION_DESTRUCTION + keyPrefix, nodeId);

@@ -46,6 +46,9 @@ Right now, all session destruction and cache eviction notices are directed all a
 
 ## Major Changes
 
+-  1.0.2
+    - Changed connection pool parameters to slow down idle connection eviction (need to make these customizable)
+
 -  1.0.1
     - Initial Release
     - Batches up Redis operations to be executed as single Redis operation
@@ -99,7 +102,7 @@ See the pom.xml. Any library marked as `compile` scope must be present on the cl
 		<libs>
 			<!-- Note TomEE includes commons-lang3 by default; here for completeness -->
 			<!-- <lib>org.apache.commons:commons-lang3:3.12.0</lib> -->
-			<lib>com.github.exabrial:redex-sm:1.0.1</lib>
+			<lib>com.github.exabrial:redex-sm:1.0.2</lib>
 			<lib>redis.clients:jedis:4.4.3</lib>
 		</libs>
 	</configuration>
