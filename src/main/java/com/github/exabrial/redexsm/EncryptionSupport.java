@@ -42,9 +42,6 @@ public class EncryptionSupport {
 	private static final String KEYGEN_ALGO = "PBKDF2WithHmacSHA256";
 	private static final int KEYGEN_ITERATIONS = 64 * 1024;
 
-	private static final String ENV_REDEX_KEY_PASSWORD = "REDEX_KEY_PASSWORD";
-	private static final String SYSPROP_REDEX_KEY_PASSWORD = "redex.keyPassword";
-
 	private final SecretKey secretKey;
 	private final SecureRandom secureRandom;
 
@@ -52,16 +49,9 @@ public class EncryptionSupport {
 		this(null);
 	}
 
-	public EncryptionSupport(String keyPassword) {
+	public EncryptionSupport(final String keyPassword) {
 		if (keyPassword == null) {
-			keyPassword = System.getProperty(SYSPROP_REDEX_KEY_PASSWORD);
-			if (keyPassword == null) {
-				keyPassword = System.getenv(ENV_REDEX_KEY_PASSWORD);
-			}
-		}
-		if (keyPassword == null) {
-			throw new RuntimeException(
-					"An encryption key was not set in neither: redex.keyPassword System Property or REDEX_KEY_PASSWORD env variable");
+			throw new RuntimeException("An encryption key keyPassword was not set");
 		} else {
 			secretKey = (SecretKey) keyFromPassword(keyPassword.toCharArray());
 			try {

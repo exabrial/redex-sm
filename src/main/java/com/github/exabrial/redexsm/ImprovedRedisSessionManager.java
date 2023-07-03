@@ -38,13 +38,14 @@ import org.slf4j.LoggerFactory;
 import com.github.exabrial.redexsm.model.SessionChangeset;
 
 public class ImprovedRedisSessionManager extends ManagerBase implements SessionRemover {
-	public static final String REDEX_UID = "redex:uid";
+	protected static final String REDEX_UID = "redex:uid";
+	protected static final String JSESSIONID = "JSESSIONID";
+	protected static final Logger log = LoggerFactory.getLogger(ImprovedRedisSessionManager.class);
 
-	private static final String JSESSIONID = "JSESSIONID";
-	private static final Logger log = LoggerFactory.getLogger(ImprovedRedisSessionManager.class);
 	private JedisRedisService redisService;
 	private Valve valve;
 
+	protected String keyPassword;
 	protected String redisUrl;
 	protected Pattern ignorePattern;
 	protected String keyPrefix;
@@ -157,7 +158,7 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 			if (nodeId == null) {
 				nodeId = getHostName() + ":" + keyPrefix + ":" + UUID.randomUUID();
 			}
-			redisService = new JedisRedisService(redisUrl, keyPrefix, nodeId);
+			redisService = new JedisRedisService(redisUrl, keyPrefix, nodeId, keyPassword);
 			redisService.start(this);
 		} catch (final Exception e) {
 			log.error("startInternal() exception", e);
@@ -257,8 +258,8 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 		this.nodeId = nodeId;
 	}
 
-	public String getNodeId() {
-		return nodeId;
+	public void setKeyPassword(final String keyPassword) {
+		this.keyPassword = keyPassword;
 	}
 
 	@Override

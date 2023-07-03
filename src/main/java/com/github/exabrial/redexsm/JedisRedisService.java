@@ -60,11 +60,11 @@ public class JedisRedisService implements Closeable {
 	private SessionDestructionListener destructionListener;
 	private SessionEvicitionListener evicitionListener;
 
-	public JedisRedisService(final String url, final String keyPrefix, final String nodeId) {
+	public JedisRedisService(final String url, final String keyPrefix, final String nodeId, final String keyPassword) {
 		this.url = url;
 		this.keyPrefix = keyPrefix;
 		this.nodeId = nodeId;
-		this.encryptionSupport = new EncryptionSupport();
+		this.encryptionSupport = new EncryptionSupport(keyPassword);
 	}
 
 	public void start(final SessionRemover sessionRemover) {
