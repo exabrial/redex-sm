@@ -40,7 +40,7 @@ At the end of the request this valve invokes `ImprovedRedissonSessionManager.req
 
 ## Scalability
 
-With sticky sessions and plenty of Tomcat servers, this should scale to hundreds of thousands of users. Eventually you'll hit limits with Redis events eviction/destruction, but that's dependant on your application's usage patterns.
+With sticky sessions and plenty of Tomcat servers, this should scale to hundreds of thousands of users. Eventually you'll hit limits with Redis events eviction/destruction, but that's dependent on your application's usage patterns.
 
 Right now, all session destruction and cache eviction notices are directed all all nodes in the cluster. This should be fine for most sane workloads. If a workload has very frequent session expiration (10s of thousands of destruction/eviction events per second), we probably need to write an enhancement to only have the managers subscribe to events for sessions they have cached. Let me know if you reach that limit. I'd be very interested to check it out.
 
@@ -123,7 +123,7 @@ See the pom.xml. Any library marked as `compile` scope must be present on the cl
 		className="com.github.exabrial.redexsm.ImprovedRedisSessionManager"
 		redisUrl="${redex.redisUrl}"
 		keyPassword="${redex.keyPassword}"
-		ignorePattern="(?:^.*\/javax\.faces\.resource\/.*$)|(?:^.*\.(ico|svg|png|gif|jpg|jpeg|css|js|tts|otf|woff|woff2|eot)$)|(?:^.*\/haproxy\.jsp$)" />
+		ignorePattern="(?:^.*\/javax\.faces\.resource\/.*$)|(?:^.*\.(ico|svg|png|gif|jpg|jpeg|css|js|tts|otf|woff|woff2|eot)$)" />
 </Context>
 ```
 
@@ -131,18 +131,20 @@ See the pom.xml. Any library marked as `compile` scope must be present on the cl
 
 You must have two pieces of configuration:
 
-   - A Redis URL
-       - Use TLS please!
-       - Use a username/password! See the Jedis documentation for URL format
-   - An encryption key
-       - Goto https://random.org and generate 20ish mixed case characters
+- `redisUrl`: A Redis URL
+    - example: `rediss://default:aPassword@redis-0.prod.example.com:6380`
+    - Best to use TLS
+    - See the Jedis documentation for URL format
+- `keyPassword`: An encryption key
+    - Goto https://random.org and generate 20ish mixed case characters
+    - The keyPassword is ran through a KDF with a fixed salt
 
 In the above `context.xml` in lieu of compiling values into the application, we are deferring the configuration to the following system properties so they can be changed at runtime:
 
 * `redex.redisUrl`
 * `redex.keyPassword`
 
-This substituion is performed by the Tomcat container itself. Feel free to use any system property you desire. You can further defer these system properties to environment variables by reading the Tomcat documentation on creating a `tomcat/bin/setenv.sh` file and setting these system properties in said script:
+This substitution is performed by the Tomcat container itself. Feel free to use any system property you desire. You can further defer these system properties to environment variables by reading the Tomcat documentation on creating a `tomcat/bin/setenv.sh` file and setting these system properties in said script:
 
 Example `setenv.sh`
 
@@ -153,6 +155,12 @@ export JAVA_OPTS="$JAVA_OPTS\
  -Dredex.keyPassword=$REDEX_KEY_PASSWORD\
 "
 ```
+
+#### Other configuration
+
+- `keyPrefix` : Override the keyPrefix. Default is the context name. Used to differentiate Redis entries and events.
+- `nodeId`: Override the nodeId. Default is `hostname + keyprefix + a UUID`. This should be unique so the sessionManager can filter out inbound events.
+- `ignorePattern`: Compiled to a Java Pattern. If the URL matches the pattern, the session will not be replicated to Redis. It's recommended your static assets match this pattern, but this is also useful for things like REST Apis.
 
 ### Example backend Haproxy Configuration
 
@@ -170,4 +178,4 @@ server apps-1.staging.example.com apps-1.staging.example.com:443 check cookie ap
     - This license allows you to safely use this code in closed-source commercial projects, without ever having to reveal your company's proprietary application code
     - However: note that if you modify/extend redex-sm, and offer online access to apps through a modified/extended redex-sm, it is required by law that the source code for your redex-sm changeset be made available _first_, before offering said access to your app
     - Again, this does not include your proprietary application source code, just the changeset to redex-sm
-- Redis, Tomcat, Redisson, Jedis, and other names are trademarks, and this project is not endorsed by, nor affiliated with them
+- Redis, Apache, Tomcat, Redisson, Jedis, and other names are trademarks; this project is not endorsed by nor affiliated with them
