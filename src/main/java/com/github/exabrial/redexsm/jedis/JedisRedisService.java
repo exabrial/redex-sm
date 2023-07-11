@@ -185,8 +185,9 @@ public class JedisRedisService implements Closeable, RedisService {
 				final byte[] encodedBytes;
 				final StringBuilder storageKey = new StringBuilder();
 				final Object value = changsetMap.get(key);
+				final boolean isBasic = isBasic(value);
 				try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-					if (ClassUtils.isPrimitiveOrWrapper(value.getClass()) || value instanceof String) {
+					if (isBasic) {
 						try (AutoDataOutputStream ados = new AutoDataOutputStream(baos)) {
 							final char writeType = ados.writeValue(value);
 							storageKey.append("d");
@@ -203,7 +204,7 @@ public class JedisRedisService implements Closeable, RedisService {
 					}
 					encodedBytes = baos.toByteArray();
 				}
-				if (plaintextAttributes.contains(key) || ClassUtils.isPrimitiveOrWrapper(value.getClass()) || value instanceof String) {
+				if (plaintextAttributes.contains(key) || isBasic) {
 					storageKey.append("pt:");
 					storageKey.append(key);
 					redisMap.put(storageKey.toString().getBytes(StandardCharsets.UTF_8), encodedBytes);
@@ -218,5 +219,9 @@ public class JedisRedisService implements Closeable, RedisService {
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	protected static boolean isBasic(final Object value) {
+		return ClassUtils.isPrimitiveOrWrapper(value.getClass()) || value instanceof String;
 	}
 }
