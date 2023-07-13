@@ -15,6 +15,8 @@
  */
 package com.github.exabrial.redexsm;
 
+import static org.apache.commons.lang3.StringUtils.trimToNull;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -150,7 +152,13 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 			}
 			sessionTimeoutSeconds = getContext().getSessionTimeout() * 60L;
 			if (keyPrefix == null) {
-				keyPrefix = getContext().getName().replaceFirst("/", "").replace("/", ":");
+				keyPrefix = trimToNull(getContext().getBaseName());
+				if (keyPrefix == null || keyPrefix.equals("ROOT")) {
+					log.error("startInternal() keyPrefix was ROOT or could not be automatically determined. It must be specified in the"
+							+ " redex-sm configuration");
+					throw new LifecycleException(
+							"keyPrefix was ROOT or could not be automatically determined. It must be specified in the redex-sm configuration");
+				}
 			}
 			if (nodeId == null) {
 				nodeId = getHostName() + ":" + keyPrefix + ":" + UUID.randomUUID();
