@@ -46,6 +46,10 @@ Right now, all session destruction and cache eviction notices are directed all a
 
 ## Major Changes
 
+-  1.0.3
+    - Minor code improvements
+    - Refuse to start if `keyPrefix` config parameter ends up being blank, `null`, or `ROOT`
+
 -  1.0.2
     - Changed connection pool parameters to slow down idle connection eviction (need to make these customizable)
 
@@ -102,7 +106,7 @@ See the pom.xml. Any library marked as `compile` scope must be present on the cl
 		<libs>
 			<!-- Note TomEE includes commons-lang3 by default; here for completeness -->
 			<!-- <lib>org.apache.commons:commons-lang3:3.12.0</lib> -->
-			<lib>com.github.exabrial:redex-sm:1.0.2</lib>
+			<lib>com.github.exabrial:redex-sm:1.0.3</lib>
 			<lib>redis.clients:jedis:4.4.3</lib>
 		</libs>
 	</configuration>
@@ -175,7 +179,7 @@ server apps-1.staging.example.com apps-1.staging.example.com:443 check cookie ap
 
 ### License and other boring legal notes
 
-- All files in this project are copyrighted 2023 - Jonathan S. Fisher
+- All files in this project are copyrighted
 - All files in this project are licensed under EUPL-1.2
     - This license allows you to safely use this code in closed-source commercial projects, without ever having to reveal your company's proprietary application code
     - However: note that if you modify/extend redex-sm, and offer online access to apps through a modified/extended redex-sm, it is required by law that the source code for your redex-sm changeset be made available _first_, before offering said access to your app
