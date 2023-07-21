@@ -74,6 +74,11 @@ Right now, all session destruction and cache eviction notices are directed all a
 
 - redex-sm has _only_ been tested with Sticky Sessions using a load balancer
     - Theoretically it should work without them, but this is an untested, and an unnecessary complication for no real-world gains
+- Sticky Sessions do not mean that when a server goes down, the users attached to that server lose their session forever
+    - Think of sticky sessions as "session affinity", not "session super glue"
+    - If your load balancer notices a server is down, it will route the person to a working server and rebalance the load automatically
+    - Hence the term "load balancer"
+- This is an important performance optimization :) 
 
 ## Usage
 
