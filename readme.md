@@ -78,7 +78,7 @@ Right now, all session destruction and cache eviction notices are directed all a
     - Think of sticky sessions as "session affinity", not "session super glue"
     - If your load balancer notices a server is down, it will route the person to a working server and rebalance the load automatically
     - Hence the term "load balancer"
-- This is an important performance optimization :) 
+- This is an important performance optimization :) You will likely see far worse performacnce and your users will experience downtime when you deploy if you don't use sticky sessions!
 
 ## Usage
 
