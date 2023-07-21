@@ -86,7 +86,12 @@ Right now, all session destruction and cache eviction notices are directed all a
 
 See the pom.xml. Any library marked as `compile` scope must be present on the classpath at runtime at the same level as redex-sm
     - So if you're putting redex-sm in your `tomcat/lib` directory, you must include the compile dependencies in `tomcat/lib`
-    
+
+- `org.apache.commons:commons-pool2:2.11.1`
+- `org.apache.commons:commons-lang3:3.12.0`
+- `redis.clients:jedis:4.4.3`
+- `org.slf4j:slf4j-api:1.7.36`
+
 #### Example TomEE build configuration
 
 ```
