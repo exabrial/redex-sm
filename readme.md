@@ -46,6 +46,9 @@ Right now, all session destruction and cache eviction notices are directed all a
 
 ## Major Changes
 
+-  1.0.4
+    - No physical code changes, just resigning a release
+
 -  1.0.3
     - Minor code improvements
     - Refuse to start if `keyPrefix` config parameter ends up being blank, `null`, or `ROOT`
@@ -116,7 +119,7 @@ See the pom.xml. Any library marked as `compile` scope must be present on the cl
 		<libs>
 			<!-- Note TomEE includes commons-lang3 by default; here for completeness -->
 			<!-- <lib>org.apache.commons:commons-lang3:3.12.0</lib> -->
-			<lib>com.github.exabrial:redex-sm:1.0.3</lib>
+			<lib>com.github.exabrial:redex-sm:1.0.4</lib>
 			<lib>redis.clients:jedis:4.4.3</lib>
 		</libs>
 	</configuration>
