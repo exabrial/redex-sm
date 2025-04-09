@@ -18,8 +18,6 @@ package com.github.exabrial.redexsm.jedis;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -29,6 +27,8 @@ import java.util.Map;
 
 import org.apache.catalina.Context;
 import org.apache.commons.lang3.ClassUtils;
+import org.eclipse.serializer.Serializer;
+import org.eclipse.serializer.SerializerFoundation;
 
 import com.github.exabrial.redexsm.ImprovedRedisSession;
 import com.github.exabrial.redexsm.RedisService;
@@ -38,7 +38,6 @@ import com.github.exabrial.redexsm.inboundevents.SessionDestructionListener;
 import com.github.exabrial.redexsm.inboundevents.SessionEvicitionListener;
 import com.github.exabrial.redexsm.io.AutoDataInputStream;
 import com.github.exabrial.redexsm.io.AutoDataOutputStream;
-import com.github.exabrial.redexsm.io.ClassloaderAwareObjectInputStream;
 import com.github.exabrial.redexsm.model.SessionChangeset;
 import com.github.exabrial.redexsm.model.SessionDestructionMessage;
 import com.github.exabrial.redexsm.model.SessionEvictionMessage;
@@ -71,6 +70,7 @@ public class JedisRedisService implements Closeable, RedisService {
 		this.encryptionSupport = new EncryptionSupport(keyPassword);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void start(final SessionRemover sessionRemover) {
 		final ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
@@ -149,21 +149,19 @@ public class JedisRedisService implements Closeable, RedisService {
 
 					final Object value;
 					final char[] valueEncodingHeader = fullKey.substring(0, 2).toCharArray();
-					try (final ByteArrayInputStream bais = new ByteArrayInputStream(encodedBytes)) {
-						switch (valueEncodingHeader[0]) {
-							case 's' -> {
-								try (ObjectInputStream ois = new ClassloaderAwareObjectInputStream(context.getLoader().getClassLoader(), bais)) {
-									value = ois.readObject();
-								}
+					switch (valueEncodingHeader[0]) {
+						case 's' -> {
+							try (Serializer<byte[]> serializer = Serializer.Bytes()) {
+								value = serializer.deserialize(encodedBytes);
 							}
-							case 'd' -> {
-								try (AutoDataInputStream adis = new AutoDataInputStream(bais)) {
-									value = adis.readType(valueEncodingHeader[1]);
-								}
+						}
+						case 'd' -> {
+							try (AutoDataInputStream adis = new AutoDataInputStream(new ByteArrayInputStream(encodedBytes))) {
+								value = adis.readType(valueEncodingHeader[1]);
 							}
-							default -> {
-								throw new RuntimeException("Unknown encodingHeader prefix:" + fullKey);
-							}
+						}
+						default -> {
+							throw new RuntimeException("Unknown encodingHeader prefix:" + fullKey);
 						}
 					}
 					sessionMap.put(key, value);
@@ -180,14 +178,14 @@ public class JedisRedisService implements Closeable, RedisService {
 	public Map<byte[], byte[]> toEncodedMap(final EncryptionSupport encryptionSupport, final Map<String, Object> changsetMap) {
 		try {
 			final Map<byte[], byte[]> redisMap = new HashMap<>();
-
 			for (final String key : changsetMap.keySet()) {
 				final byte[] encodedBytes;
 				final StringBuilder storageKey = new StringBuilder();
 				final Object value = changsetMap.get(key);
 				final boolean isBasic = isBasic(value);
-				try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-					if (isBasic) {
+
+				if (isBasic) {
+					try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 						try (AutoDataOutputStream ados = new AutoDataOutputStream(baos)) {
 							final char writeType = ados.writeValue(value);
 							storageKey.append("d");
@@ -195,14 +193,13 @@ public class JedisRedisService implements Closeable, RedisService {
 							storageKey.append(":");
 							ados.flush();
 						}
-					} else {
-						try (final ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-							storageKey.append("so:");
-							oos.writeObject(value);
-							oos.flush();
-						}
+						encodedBytes = baos.toByteArray();
 					}
-					encodedBytes = baos.toByteArray();
+				} else {
+					try (Serializer<byte[]> serializer = Serializer.Bytes()) {
+						storageKey.append("so:");
+						encodedBytes = serializer.serialize(value);
+					}
 				}
 				if (plaintextAttributes.contains(key) || isBasic) {
 					storageKey.append("pt:");

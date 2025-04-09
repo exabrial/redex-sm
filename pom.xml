@@ -69,6 +69,12 @@
 			<version>1.7.36</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.eclipse.serializer</groupId>
+			<artifactId>serializer</artifactId>
+			<version>2.0.0</version>
+			<scope>compile</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>org.apache.tomcat</groupId>
