@@ -101,7 +101,7 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 	}
 
 	@Override
-	public Session createEmptySession() {
+	public ImprovedRedisSession createEmptySession() {
 		log.trace("createEmptySession()");
 		return new ImprovedRedisSession(this);
 	}
@@ -124,9 +124,13 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 				final Map<String, Object> sessionMap = redisService.loadSessionMap(id, getContext());
 				if (sessionMap != null) {
 					log.trace("findSession() session located in redis");
-					session = (ImprovedRedisSession) createEmptySession();
+					session = createEmptySession();
 					session.load(sessionMap);
-					session.setId(id, true);
+					session.setManager(this);
+					session.setValid(true);
+					session.setNew(false);
+					session.setId(id, false);
+					session.activate();
 				} else {
 					log.trace("findSession() redis miss; giving up");
 				}
@@ -188,8 +192,7 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 	}
 
 	protected String getHostName() {
-		String hostName;
-		hostName = System.getProperty("server.hostname");
+		String hostName = System.getProperty("server.hostname");
 		if (hostName == null) {
 			try {
 				final Process p = Runtime.getRuntime().exec("hostname").destroyForcibly();

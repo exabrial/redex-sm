@@ -1,6 +1,6 @@
 # redex-sm
 
-An improved Tomcat SessionManager that uses Redis via Jedis, with native encryption support
+An improved Tomcat SessionManager that uses Redis via Jedis, with native encryption support. Faster and lightweight compared to Redisson, updated and maintained as needed.
 
 ## Motivation
 
@@ -36,7 +36,7 @@ At the same two Redis listeners are activated, one for session eviction `Session
 
 When the sessionManager is asked to load a session, it first checks it's locally stored sessions. If it can't find the session, it attempts to retrieve it from Redis.
 
-At the end of the request this valve invokes `ImprovedRedissonSessionManager.requestComplete()`. The manager checks to see if the URI is on the ignore list. If it is not ignored, and a session is active, or a session creation cookie is being sent to the client, it creates a Redis transaction and sends all of the attributes to Redis to be stored as a `Hash`. This batch includes a session eviction event to let other Tomcat servers know they need to evict their in-memory map of the user's session and so they'll be forced to retrieve a fresh copy of the session from Redis.
+At the end of the request this valve invokes `ImprovedRedissonSessionManager.requestComplete()`. The manager checks to see if the URI is on the ignore list. If the request URL is not ignored, and a session is active, or a session creation cookie is being sent to the client, it creates a Redis transaction and sends all of the attributes to Redis to be stored as a `Hash` type. This batch includes a session eviction event to let other Tomcat servers know they need to evict their in-memory map of the user's session and so they'll be forced to retrieve a fresh copy of the session from Redis.
 
 ## Scalability
 
@@ -44,7 +44,11 @@ With sticky sessions and plenty of Tomcat servers, this should scale to hundreds
 
 Right now, all session destruction and cache eviction notices are directed all all nodes in the cluster. This should be fine for most sane workloads. If a workload has very frequent session expiration (10s of thousands of destruction/eviction events per second), we probably need to write an enhancement to only have the managers subscribe to events for sessions they have cached. Let me know if you reach that limit. I'd be very interested to check it out.
 
+
 ## Major Changes
+
+-  1.0.5
+    - Fix Bug #8 - `session.activate()` needs to be called, and session needs to be bound to the current manager
 
 -  1.0.4
     - No physical code changes, just resigning a release
@@ -72,6 +76,7 @@ Right now, all session destruction and cache eviction notices are directed all a
 - All objects in the object graph of an object being put into the session must implement `Serializable`
     - Therefore, all `@SessionScoped` and `@ViewScoped` beans must implement `Serializable`
 - redex-sm **ONLY** supports session tracking mode `cookie`
+- Ideally, start your Tomcat/TomEE instance with a server property called `server.hostname` so you can tell which node wrote the session into Redis.
 
 ## HTTP Environment Requirements
 

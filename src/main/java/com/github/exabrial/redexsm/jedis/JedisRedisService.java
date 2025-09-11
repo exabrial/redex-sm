@@ -71,6 +71,7 @@ public class JedisRedisService implements Closeable, RedisService {
 		this.encryptionSupport = new EncryptionSupport(keyPassword);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void start(final SessionRemover sessionRemover) {
 		final ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
