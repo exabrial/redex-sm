@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.exabrial</groupId>
 	<artifactId>redex-sm</artifactId>
-	<version>1.0.5-SNAPSHOT</version>
+	<version>1.0.5</version>
 	<packaging>jar</packaging>
 	<description>redex-sm: An improved Tomcat SessionManager that uses Redis via
 		Redisson, with native encryption support</description>
@@ -16,7 +14,7 @@
 		<connection>scm:git:ssh://git@github.com/exabrial/exabrial/redex-sm.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/exabrial/redex-sm.git</developerConnection>
 		<url>https://github.com/exabrial/redex-sm/tree/master</url>
-		<tag>HEAD</tag>
+		<tag>redex-sm-1.0.5</tag>
 	</scm>
 
 	<properties>
@@ -88,19 +86,22 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.1</version>
+				<artifactId>maven-toolchains-plugin</artifactId>
+				<version>3.1.0</version>
 				<executions>
 					<execution>
-						<id>source-package</id>
+						<id>toolchain-exec</id>
 						<goals>
-							<goal>jar</goal>
+							<goal>toolchain</goal>
 						</goals>
 					</execution>
 				</executions>
 				<configuration>
-					<attach>true</attach>
-					<includePom>true</includePom>
+					<toolchains>
+						<jdk>
+							<version>17</version>
+						</jdk>
+					</toolchains>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -117,6 +118,23 @@
 				</executions>
 				<configuration>
 					<attach>true</attach>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.0.1</version>
+				<executions>
+					<execution>
+						<id>source-package</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<attach>true</attach>
+					<includePom>true</includePom>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -149,14 +167,12 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.sonatype.plugins</groupId>
-				<artifactId>nexus-staging-maven-plugin</artifactId>
-				<version>1.6.13</version>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.7.0</version>
 				<extensions>true</extensions>
 				<configuration>
-					<serverId>ossrh</serverId>
-					<nexusUrl>https://oss.sonatype.org/</nexusUrl>
-					<autoReleaseAfterClose>true</autoReleaseAfterClose>
+					<publishingServerId>ossrh</publishingServerId>
 				</configuration>
 			</plugin>
 		</plugins>
