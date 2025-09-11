@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.exabrial</groupId>
 	<artifactId>redex-sm</artifactId>
-	<version>1.0.5</version>
+	<version>1.0.6-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<description>redex-sm: An improved Tomcat SessionManager that uses Redis via
 		Redisson, with native encryption support</description>
