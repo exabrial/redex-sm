@@ -27,6 +27,7 @@ public class SessionReplicationValve extends ValveBase {
 	private final ImprovedRedisSessionManager improvedRedisSessionManager;
 
 	public SessionReplicationValve(final ImprovedRedisSessionManager improvedRedisSessionManager) {
+		super(true);
 		this.improvedRedisSessionManager = improvedRedisSessionManager;
 	}
 
