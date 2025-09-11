@@ -48,6 +48,7 @@ Right now, all session destruction and cache eviction notices are directed all a
 ## Major Changes
 
 -  1.0.5
+    - Fix Bug #7 - `session.activate()` Async operations, super(true) not invoked to indicate valve is async compatible
     - Fix Bug #8 - `session.activate()` needs to be called, and session needs to be bound to the current manager
 
 -  1.0.4
