@@ -189,12 +189,18 @@ export JAVA_OPTS="$JAVA_OPTS\
 
 The environment load balancer will insert a `sticky` cookie:
 
+
 ```
-retry-on 503 0rtt-rejected conn-failure
-option httpchk
-cookie sticky insert nocache httponly secure attr "SameSite=Strict"
-server apps-1.staging.example.com apps-1.staging.example.com:443 check cookie apps-1 ssl verify required
+backend your-backend-name
+  balance leastconn
+  retry-on 503 0rtt-rejected conn-failure
+  option httpchk
+  http-check send meth GET uri /your-testing-url ver HTTP/1.0
+  http-check expect rstatus 2[0-9][0-9]
+  cookie sticky insert indirect nocache maxidle 30m maxlife 2h httponly secure attr "SameSite=Strict"
+  server your-server-id your-server.example.com:443 check cookie your-server-id
 ```
+
 
 ### License and other boring legal notes
 
