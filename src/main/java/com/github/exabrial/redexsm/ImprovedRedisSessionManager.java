@@ -51,7 +51,7 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 
 	protected String keyPassword;
 	protected String redisUrl;
-	protected Pattern ignorePattern;
+	protected Pattern ignorePattern = Pattern.compile("(?!.*)");
 	protected String keyPrefix;
 	protected String nodeId;
 	protected String sessionCookieName;
