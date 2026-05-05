@@ -192,6 +192,31 @@ export JAVA_OPTS="$JAVA_OPTS\
 - `nodeId`: Override the nodeId. Default is `hostname + keyprefix + a UUID`. This should be unique so the sessionManager can filter out inbound events.
 - `ignorePattern`: Compiled to a Java Pattern. If the URL matches the pattern, the session will not be replicated to Redis. It's recommended your static assets match this pattern, but this is also useful for things like REST Apis.
 
+#### Connection Pool Configuration
+
+The following optional parameters control the Redis connection pool. The defaults should work well for the vast majority of cases:
+
+- `poolMinIdle`: Minimum number of idle connections in the pool. Default: `1`
+- `poolMaxIdle`: Maximum number of idle connections in the pool. Default: `1`
+- `poolMaxTotal`: Maximum total number of connections in the pool. Default: `15`
+- `poolMaxWaitMillis`: Maximum time in milliseconds to wait for a connection from the pool. Default: `5000`
+- `poolMinEvictableIdleTimeMillis`: Minimum time in milliseconds a connection can sit idle before being eligible for eviction. Default: `3600000` (1 hour)
+
+Example `context.xml` with pool customization:
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+	<Manager
+		className="com.github.exabrial.redexsm.ImprovedRedisSessionManager"
+		redisUrl="${redex.redisUrl}"
+		keyPassword="${redex.keyPassword}"
+		poolMaxTotal="30"
+		poolMaxWaitMillis="10000"
+		ignorePattern="(?:^.*\/javax\.faces\.resource\/.*$)|(?:^.*\.(ico|svg|png|gif|jpg|jpeg|css|js|tts|otf|woff|woff2|eot)$)" />
+</Context>
+```
+
 ### Example backend Haproxy Configuration
 
 The environment load balancer will insert a `sticky` cookie:

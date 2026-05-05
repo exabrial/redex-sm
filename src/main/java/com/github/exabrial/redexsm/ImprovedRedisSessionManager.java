@@ -55,6 +55,11 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 	protected String nodeId;
 	protected String sessionCookieName;
 	protected long sessionTimeoutSeconds;
+	protected int poolMinIdle = 1;
+	protected int poolMaxIdle = 1;
+	protected int poolMaxTotal = 15;
+	protected long poolMaxWaitMillis = 5000;
+	protected long poolMinEvictableIdleTimeMillis = 3600000;
 
 	public void requestStarted(final Request request, final Response response) {
 	}
@@ -171,7 +176,8 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 			if (keyPassword == null || keyPassword.trim().isEmpty()) {
 				log.warn("startInternal() keyPassword is not set. Session attributes will be stored UNENCRYPTED in Redis.");
 			}
-			redisService = new JedisRedisService(redisUrl, keyPrefix, nodeId, keyPassword);
+			redisService = new JedisRedisService(redisUrl, keyPrefix, nodeId, keyPassword, poolMinIdle, poolMaxIdle, poolMaxTotal,
+					poolMaxWaitMillis, poolMinEvictableIdleTimeMillis);
 			redisService.start(this);
 		} catch (final Exception e) {
 			log.error("startInternal() exception", e);
@@ -279,6 +285,26 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 
 	public void setKeyPassword(final String keyPassword) {
 		this.keyPassword = keyPassword;
+	}
+
+	public void setPoolMinIdle(final int poolMinIdle) {
+		this.poolMinIdle = poolMinIdle;
+	}
+
+	public void setPoolMaxIdle(final int poolMaxIdle) {
+		this.poolMaxIdle = poolMaxIdle;
+	}
+
+	public void setPoolMaxTotal(final int poolMaxTotal) {
+		this.poolMaxTotal = poolMaxTotal;
+	}
+
+	public void setPoolMaxWaitMillis(final long poolMaxWaitMillis) {
+		this.poolMaxWaitMillis = poolMaxWaitMillis;
+	}
+
+	public void setPoolMinEvictableIdleTimeMillis(final long poolMinEvictableIdleTimeMillis) {
+		this.poolMinEvictableIdleTimeMillis = poolMinEvictableIdleTimeMillis;
 	}
 
 	@Override

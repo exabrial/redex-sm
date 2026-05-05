@@ -59,14 +59,26 @@ public class JedisRedisService implements Closeable, RedisService {
 	private final String keyPrefix;
 	private final EncryptionSupport encryptionSupport;
 	private final String nodeId;
+	private final int poolMinIdle;
+	private final int poolMaxIdle;
+	private final int poolMaxTotal;
+	private final long poolMaxWaitMillis;
+	private final long poolMinEvictableIdleTimeMillis;
 	private UnifiedJedis jedis;
 	private SessionDestructionListener destructionListener;
 	private SessionEvicitionListener evicitionListener;
 
-	public JedisRedisService(final String url, final String keyPrefix, final String nodeId, final String keyPassword) {
+	public JedisRedisService(final String url, final String keyPrefix, final String nodeId, final String keyPassword,
+			final int poolMinIdle, final int poolMaxIdle, final int poolMaxTotal, final long poolMaxWaitMillis,
+			final long poolMinEvictableIdleTimeMillis) {
 		this.url = url;
 		this.keyPrefix = keyPrefix;
 		this.nodeId = nodeId;
+		this.poolMinIdle = poolMinIdle;
+		this.poolMaxIdle = poolMaxIdle;
+		this.poolMaxTotal = poolMaxTotal;
+		this.poolMaxWaitMillis = poolMaxWaitMillis;
+		this.poolMinEvictableIdleTimeMillis = poolMinEvictableIdleTimeMillis;
 		if (keyPassword != null && !keyPassword.trim().isEmpty()) {
 			encryptionSupport = new EncryptionSupport(keyPassword);
 		} else {
@@ -78,12 +90,12 @@ public class JedisRedisService implements Closeable, RedisService {
 	@Override
 	public void start(final SessionRemover sessionRemover) {
 		final ConnectionPoolConfig poolConfig = new ConnectionPoolConfig();
-		poolConfig.setMinIdle(1);
-		poolConfig.setMaxIdle(1);
-		poolConfig.setMaxTotal(15);
-		poolConfig.setMaxWait(Duration.of(5000, ChronoUnit.MILLIS));
+		poolConfig.setMinIdle(poolMinIdle);
+		poolConfig.setMaxIdle(poolMaxIdle);
+		poolConfig.setMaxTotal(poolMaxTotal);
+		poolConfig.setMaxWait(Duration.of(poolMaxWaitMillis, ChronoUnit.MILLIS));
 		poolConfig.setJmxEnabled(true);
-		poolConfig.setMinEvictableIdleTime(Duration.of(1, ChronoUnit.HOURS));
+		poolConfig.setMinEvictableIdleTime(Duration.of(poolMinEvictableIdleTimeMillis, ChronoUnit.MILLIS));
 		poolConfig.setBlockWhenExhausted(true);
 		jedis = new JedisPooled(poolConfig, url);
 		destructionListener = new SessionDestructionListener(sessionRemover, jedis, REDEX_SESSION_DESTRUCTION + keyPrefix, nodeId);
