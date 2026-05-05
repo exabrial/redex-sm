@@ -20,8 +20,10 @@ import static org.apache.commons.lang3.StringUtils.trimToNull;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.Cookie;
@@ -195,9 +197,16 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 		String hostName = System.getProperty("server.hostname");
 		if (hostName == null) {
 			try {
-				final Process p = Runtime.getRuntime().exec("hostname").destroyForcibly();
-				final byte[] bytes = p.getInputStream().readAllBytes();
-				hostName = new String(bytes, "ASCII").trim();
+				final Process process = Runtime.getRuntime().exec("hostname");
+				try {
+					final byte[] bytes = process.getInputStream().readAllBytes();
+					if (!process.waitFor(5, TimeUnit.SECONDS)) {
+						log.warn("getHostName() hostname process did not complete within timeout");
+					}
+					hostName = new String(bytes, StandardCharsets.US_ASCII).trim();
+				} finally {
+					process.destroyForcibly();
+				}
 			} catch (final Exception e) {
 				try {
 					hostName = InetAddress.getLocalHost().getHostName();
