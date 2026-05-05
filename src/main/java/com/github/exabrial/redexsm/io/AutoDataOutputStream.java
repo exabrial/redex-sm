@@ -35,7 +35,7 @@ public class AutoDataOutputStream extends DataOutputStream {
 				super.writeByte((byte) value);
 				yield 'B';
 			}
-			case "java.lang.Char" -> {
+			case "java.lang.Character" -> {
 				super.writeChar((char) value);
 				yield 'C';
 			}
