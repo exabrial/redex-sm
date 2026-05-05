@@ -47,6 +47,16 @@ Right now, all session destruction and cache eviction notices are directed all a
 
 ## Major Changes
 
+-  1.1.0
+    - Fix #3 - Allow the developer to change the Jedis connection pool parameters
+    - Fix #9 - `getHostName()` race condition: process stream read before `waitFor()`
+    - Fix #10 - Character class name typo in `AutoDataOutputStream`
+    - Fix #11 - Replace reflective field access with direct access in `ImprovedRedisSession`
+    - Fix #12 - TOCTOU race condition in `JedisRedisService.loadSessionMap()`
+    - Fix #13 - Support running without encryption (`keyPassword` is now optional)
+    - Fix #14 - Default `ignorePattern` to a match-nothing pattern instead of `null`
+    - Fix #15 - Hardcoded PBKDF2 salt is now configurable via `keySalt` parameter
+
 -  1.0.5
     - Fix Bug #7 - `session.activate()` Async operations, super(true) not invoked to indicate valve is async compatible
     - Fix Bug #8 - `session.activate()` needs to be called, and session needs to be bound to the current manager
@@ -59,7 +69,7 @@ Right now, all session destruction and cache eviction notices are directed all a
     - Refuse to start if `keyPrefix` config parameter ends up being blank, `null`, or `ROOT`
 
 -  1.0.2
-    - Changed connection pool parameters to slow down idle connection eviction (need to make these customizable)
+    - Changed connection pool parameters to slow down idle connection eviction (now customizable in 1.1.0)
 
 -  1.0.1
     - Initial Release
@@ -124,10 +134,11 @@ See the pom.xml. Any library marked as `compile` scope must be present on the cl
 		<context>${project.artifactId}</context>
 		<runtimeWorkingDir>${project.build.finalName}-exec</runtimeWorkingDir>
 		<libs>
-			<!-- Note TomEE includes commons-lang3 by default; here for completeness -->
-			<!-- <lib>org.apache.commons:commons-lang3:3.12.0</lib> -->
-			<lib>com.github.exabrial:redex-sm:1.0.4</lib>
-			<lib>redis.clients:jedis:4.4.3</lib>
+			<!-- Note TomEE includes commons-lang3 and commons-pool2 by default; here for completeness -->
+			<!-- <lib>org.apache.commons:commons-lang3:3.17.0</lib> -->
+			<!-- <lib>org.apache.commons:commons-pool2:2.12.0</lib> -->
+			<lib>com.github.exabrial:redex-sm:1.1.0</lib>
+			<lib>redis.clients:jedis:4.4.8</lib>
 		</libs>
 	</configuration>
 </plugin>
@@ -236,10 +247,10 @@ backend your-backend-name
   balance leastconn
   retry-on 503 0rtt-rejected conn-failure
   option httpchk
-  http-check send meth GET uri /your-testing-url ver HTTP/1.0
+  http-check send meth GET uri /health ver HTTP/1.1 hdr Host your-app.example.com
   http-check expect rstatus 2[0-9][0-9]
   cookie sticky insert indirect nocache maxidle 30m maxlife 2h httponly secure attr "SameSite=Strict"
-  server your-server-id your-server.example.com:443 check cookie your-server-id
+  server app-1.prod.example.com app-1.prod.example.com:443 check cookie app-1 ssl verify required ca-file /usr/local/share/ca-certificates/your-ca.crt
 ```
 
 
