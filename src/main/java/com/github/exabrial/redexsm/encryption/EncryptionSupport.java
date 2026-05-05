@@ -1,17 +1,16 @@
 /*
  * Copyright 2023 Jonathan S. Fisher
  *
- * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the
- * European Commission - subsequent versions of the EUPL (the "Licence");
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European Commission - subsequent versions of the EUPL
+ * (the "Licence");
  *
- * You may not use this work except in compliance with the Licence.
- * You may obtain a copy of the Licence at:
+ * You may not use this work except in compliance with the Licence. You may obtain a copy of the Licence at:
  *
  * https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an "AS IS" basis,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and limitations under the Licence.
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the Licence for the specific language governing
+ * permissions and limitations under the Licence.
  */
 package com.github.exabrial.redexsm.encryption;
 
@@ -31,8 +30,8 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class EncryptionSupport {
-	protected byte[] keygenSalt = new byte[] { 93, 56, -45, 23, 46, 98, -106, -54, 0, 94, -58, -74, -6, -23, -55, 10, -3, 77, 23, 108,
-			76, 11, -117, -72, -50, -25, 60, -49, 60, 51, 13, 48 };
+	protected byte[] keygenSalt = { 93, 56, -45, 23, 46, 98, -106, -54, 0, 94, -58, -74, -6, -23, -55, 10, -3, 77, 23, 108, 76, 11, -117,
+			-72, -50, -25, 60, -49, 60, 51, 13, 48 };
 
 	private static final String AES = "AES";
 	private static final String AES_GCM_NO_PADDING = AES + "/GCM/NoPadding";
@@ -44,10 +43,6 @@ public class EncryptionSupport {
 
 	private final SecretKey secretKey;
 	private final SecureRandom secureRandom;
-
-	public EncryptionSupport() {
-		this(null);
-	}
 
 	public EncryptionSupport(final String keyPassword) {
 		if (keyPassword == null) {
