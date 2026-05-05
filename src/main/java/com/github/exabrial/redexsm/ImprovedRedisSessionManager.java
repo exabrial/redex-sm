@@ -1,17 +1,16 @@
 /*
  * Copyright 2023 Jonathan S. Fisher
  *
- * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the
- * European Commission - subsequent versions of the EUPL (the "Licence");
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European Commission - subsequent versions of the EUPL
+ * (the "Licence");
  *
- * You may not use this work except in compliance with the Licence.
- * You may obtain a copy of the Licence at:
+ * You may not use this work except in compliance with the Licence. You may obtain a copy of the Licence at:
  *
  * https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an "AS IS" basis,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and limitations under the Licence.
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the Licence for the specific language governing
+ * permissions and limitations under the Licence.
  */
 package com.github.exabrial.redexsm;
 
@@ -168,6 +167,9 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 			}
 			if (nodeId == null) {
 				nodeId = getHostName() + ":" + keyPrefix + ":" + UUID.randomUUID();
+			}
+			if (keyPassword == null || keyPassword.trim().isEmpty()) {
+				log.warn("startInternal() keyPassword is not set. Session attributes will be stored UNENCRYPTED in Redis.");
 			}
 			redisService = new JedisRedisService(redisUrl, keyPrefix, nodeId, keyPassword);
 			redisService.start(this);

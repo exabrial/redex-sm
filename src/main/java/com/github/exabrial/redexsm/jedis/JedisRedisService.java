@@ -1,17 +1,16 @@
 /*
  * Copyright 2023 Jonathan S. Fisher
  *
- * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the
- * European Commission - subsequent versions of the EUPL (the "Licence");
+ * Licensed under the EUPL, Version 1.2 or – as soon they will be approved by the European Commission - subsequent versions of the EUPL
+ * (the "Licence");
  *
- * You may not use this work except in compliance with the Licence.
- * You may obtain a copy of the Licence at:
+ * You may not use this work except in compliance with the Licence. You may obtain a copy of the Licence at:
  *
  * https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an "AS IS" basis,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and limitations under the Licence.
+ * Unless required by applicable law or agreed to in writing, software distributed under the Licence is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the Licence for the specific language governing
+ * permissions and limitations under the Licence.
  */
 package com.github.exabrial.redexsm.jedis;
 
@@ -68,7 +67,11 @@ public class JedisRedisService implements Closeable, RedisService {
 		this.url = url;
 		this.keyPrefix = keyPrefix;
 		this.nodeId = nodeId;
-		this.encryptionSupport = new EncryptionSupport(keyPassword);
+		if (keyPassword != null && !keyPassword.trim().isEmpty()) {
+			encryptionSupport = new EncryptionSupport(keyPassword);
+		} else {
+			encryptionSupport = null;
+		}
 	}
 
 	@SuppressWarnings("deprecation")
@@ -82,7 +85,7 @@ public class JedisRedisService implements Closeable, RedisService {
 		poolConfig.setJmxEnabled(true);
 		poolConfig.setMinEvictableIdleTime(Duration.of(1, ChronoUnit.HOURS));
 		poolConfig.setBlockWhenExhausted(true);
-		this.jedis = new JedisPooled(poolConfig, url);
+		jedis = new JedisPooled(poolConfig, url);
 		destructionListener = new SessionDestructionListener(sessionRemover, jedis, REDEX_SESSION_DESTRUCTION + keyPrefix, nodeId);
 		evicitionListener = new SessionEvicitionListener(sessionRemover, jedis, REDEX_SESSION_EVICTION + keyPrefix, nodeId);
 	}
@@ -143,6 +146,10 @@ public class JedisRedisService implements Closeable, RedisService {
 							encodedBytes = encodedMap.get(encodedKey);
 						}
 						case 'c' -> {
+							if (encryptionSupport == null) {
+								throw new RuntimeException(
+										"Session data is encrypted but no keyPassword was configured. Set keyPassword to decrypt existing sessions.");
+							}
 							encodedBytes = encryptionSupport.decrypt(encodedMap.get(encodedKey));
 						}
 						default -> {
@@ -205,7 +212,7 @@ public class JedisRedisService implements Closeable, RedisService {
 					}
 					encodedBytes = baos.toByteArray();
 				}
-				if (plaintextAttributes.contains(key) || isBasic) {
+				if (encryptionSupport == null || plaintextAttributes.contains(key) || isBasic) {
 					storageKey.append("pt:");
 					storageKey.append(key);
 					redisMap.put(storageKey.toString().getBytes(StandardCharsets.UTF_8), encodedBytes);

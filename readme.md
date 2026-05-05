@@ -69,8 +69,9 @@ Right now, all session destruction and cache eviction notices are directed all a
 
 ## Important Notes
 
-- Session Attributes that are Java basic types (long, boolean, int, String, etc) are serialized, **but are not encrypted when stored in Redis**. _So don't put the user's password as a session attribute!_
-- Any other object type is encrypted after being serialized. So the user's `Principal` object is encrypted when stored in Redis and is encrypted at rest.
+- Encryption is optional. If `keyPassword` is not configured, all session data is stored as plaintext in Redis.
+- When encryption is enabled, session attributes that are Java basic types (long, boolean, int, String, etc) are serialized, **but are not encrypted when stored in Redis**. _So don't put the user's password as a session attribute!_
+- When encryption is enabled, any other object type is encrypted after being serialized. So the user's `Principal` object is encrypted when stored in Redis and is encrypted at rest.
 
 ## Application Requirements
 
@@ -152,15 +153,21 @@ See the pom.xml. Any library marked as `compile` scope must be present on the cl
 
 ### Environment Configuration
 
-You must have two pieces of configuration:
+Required configuration:
 
 - `redisUrl`: A Redis URL
     - example: `rediss://default:aPassword@redis-0.prod.example.com:6380`
     - Best to use TLS
     - See the Jedis documentation for URL format
+
+Optional configuration:
+
 - `keyPassword`: An encryption key
+    - If omitted, session attributes are stored **unencrypted** in Redis. Only omit this if your Redis instance is on a trusted network and you accept the risk of plaintext session data at rest.
+    - If provided, non-basic session attributes (e.g. the user's `Principal`) are encrypted with AES-GCM before being stored in Redis
     - Goto https://random.org and generate 20ish mixed case characters
     - The keyPassword is ran through a KDF with a fixed salt
+    - **Warning**: If you have existing encrypted sessions in Redis and remove `keyPassword`, those sessions will fail to load. Users with encrypted sessions will need to re-authenticate.
 
 In the above `context.xml` in lieu of compiling values into the application, we are deferring the configuration to the following system properties so they can be changed at runtime:
 
