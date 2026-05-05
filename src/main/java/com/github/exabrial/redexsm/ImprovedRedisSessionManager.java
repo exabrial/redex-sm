@@ -49,6 +49,7 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 	private Valve valve;
 
 	protected String keyPassword;
+	protected String keySalt;
 	protected String redisUrl;
 	protected Pattern ignorePattern = Pattern.compile("(?!.*)");
 	protected String keyPrefix;
@@ -176,8 +177,8 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 			if (keyPassword == null || keyPassword.trim().isEmpty()) {
 				log.warn("startInternal() keyPassword is not set. Session attributes will be stored UNENCRYPTED in Redis.");
 			}
-			redisService = new JedisRedisService(redisUrl, keyPrefix, nodeId, keyPassword, poolMinIdle, poolMaxIdle, poolMaxTotal,
-					poolMaxWaitMillis, poolMinEvictableIdleTimeMillis);
+			redisService = new JedisRedisService(redisUrl, keyPrefix, nodeId, keyPassword, keySalt, poolMinIdle, poolMaxIdle,
+					poolMaxTotal, poolMaxWaitMillis, poolMinEvictableIdleTimeMillis);
 			redisService.start(this);
 		} catch (final Exception e) {
 			log.error("startInternal() exception", e);
@@ -285,6 +286,10 @@ public class ImprovedRedisSessionManager extends ManagerBase implements SessionR
 
 	public void setKeyPassword(final String keyPassword) {
 		this.keyPassword = keyPassword;
+	}
+
+	public void setKeySalt(final String keySalt) {
+		this.keySalt = keySalt;
 	}
 
 	public void setPoolMinIdle(final int poolMinIdle) {

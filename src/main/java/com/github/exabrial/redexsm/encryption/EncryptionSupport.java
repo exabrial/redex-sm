@@ -21,6 +21,7 @@ import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.Base64;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -30,8 +31,8 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class EncryptionSupport {
-	protected byte[] keygenSalt = { 93, 56, -45, 23, 46, 98, -106, -54, 0, 94, -58, -74, -6, -23, -55, 10, -3, 77, 23, 108, 76, 11, -117,
-			-72, -50, -25, 60, -49, 60, 51, 13, 48 };
+	private static final byte[] DEFAULT_SALT = { 93, 56, -45, 23, 46, 98, -106, -54, 0, 94, -58, -74, -6, -23, -55, 10, -3, 77, 23, 108,
+			76, 11, -117, -72, -50, -25, 60, -49, 60, 51, 13, 48 };
 
 	private static final String AES = "AES";
 	private static final String AES_GCM_NO_PADDING = AES + "/GCM/NoPadding";
@@ -41,13 +42,19 @@ public class EncryptionSupport {
 	private static final String KEYGEN_ALGO = "PBKDF2WithHmacSHA256";
 	private static final int KEYGEN_ITERATIONS = 64 * 1024;
 
+	private final byte[] keygenSalt;
 	private final SecretKey secretKey;
 	private final SecureRandom secureRandom;
 
-	public EncryptionSupport(final String keyPassword) {
+	public EncryptionSupport(final String keyPassword, final String keySalt) {
 		if (keyPassword == null) {
 			throw new RuntimeException("An encryption key keyPassword was not set");
 		} else {
+			if (keySalt != null && !keySalt.trim().isEmpty()) {
+				keygenSalt = Base64.getDecoder().decode(keySalt);
+			} else {
+				keygenSalt = DEFAULT_SALT;
+			}
 			secretKey = (SecretKey) keyFromPassword(keyPassword.toCharArray());
 			try {
 				secureRandom = SecureRandom.getInstanceStrong();

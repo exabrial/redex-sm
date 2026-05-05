@@ -69,8 +69,8 @@ public class JedisRedisService implements Closeable, RedisService {
 	private SessionEvicitionListener evicitionListener;
 
 	public JedisRedisService(final String url, final String keyPrefix, final String nodeId, final String keyPassword,
-			final int poolMinIdle, final int poolMaxIdle, final int poolMaxTotal, final long poolMaxWaitMillis,
-			final long poolMinEvictableIdleTimeMillis) {
+			final String keySalt, final int poolMinIdle, final int poolMaxIdle, final int poolMaxTotal,
+			final long poolMaxWaitMillis, final long poolMinEvictableIdleTimeMillis) {
 		this.url = url;
 		this.keyPrefix = keyPrefix;
 		this.nodeId = nodeId;
@@ -80,7 +80,7 @@ public class JedisRedisService implements Closeable, RedisService {
 		this.poolMaxWaitMillis = poolMaxWaitMillis;
 		this.poolMinEvictableIdleTimeMillis = poolMinEvictableIdleTimeMillis;
 		if (keyPassword != null && !keyPassword.trim().isEmpty()) {
-			encryptionSupport = new EncryptionSupport(keyPassword);
+			encryptionSupport = new EncryptionSupport(keyPassword, keySalt);
 		} else {
 			encryptionSupport = null;
 		}

@@ -147,6 +147,7 @@ See the pom.xml. Any library marked as `compile` scope must be present on the cl
 		className="com.github.exabrial.redexsm.ImprovedRedisSessionManager"
 		redisUrl="${redex.redisUrl}"
 		keyPassword="${redex.keyPassword}"
+		keySalt="${redex.keySalt}"
 		ignorePattern="(?:^.*\/javax\.faces\.resource\/.*$)|(?:^.*\.(ico|svg|png|gif|jpg|jpeg|css|js|tts|otf|woff|woff2|eot)$)" />
 </Context>
 ```
@@ -166,13 +167,20 @@ Optional configuration:
     - If omitted, session attributes are stored **unencrypted** in Redis. Only omit this if your Redis instance is on a trusted network and you accept the risk of plaintext session data at rest.
     - If provided, non-basic session attributes (e.g. the user's `Principal`) are encrypted with AES-GCM before being stored in Redis
     - Goto https://random.org and generate 20ish mixed case characters
-    - The keyPassword is ran through a KDF with a fixed salt
+    - The keyPassword is ran through a KDF with the configured salt
     - **Warning**: If you have existing encrypted sessions in Redis and remove `keyPassword`, those sessions will fail to load. Users with encrypted sessions will need to re-authenticate.
+- `keySalt`: A Base64-encoded salt for the PBKDF2 key derivation function
+    - If omitted, a built-in default salt is used (backward compatible with previous versions)
+    - Recommended for new deployments: generate a unique 32-byte salt per deployment to provide cross-deployment isolation
+    - All nodes in a cluster must share the same `keySalt`
+    - To generate a salt: `openssl rand -base64 32`
+    - **Warning**: Changing the salt invalidates all existing encrypted sessions. Users will need to re-authenticate.
 
 In the above `context.xml` in lieu of compiling values into the application, we are deferring the configuration to the following system properties so they can be changed at runtime:
 
 * `redex.redisUrl`
 * `redex.keyPassword`
+* `redex.keySalt`
 
 This substitution is performed by the Tomcat container itself. Feel free to use any system property you desire. You can further defer these system properties to environment variables by reading the Tomcat documentation on creating a `tomcat/bin/setenv.sh` file and setting these system properties in said script:
 
@@ -183,6 +191,7 @@ Example `setenv.sh`
 export JAVA_OPTS="$JAVA_OPTS\
  -Dredex.redisUrl=$REDEX_REDIS_URL\
  -Dredex.keyPassword=$REDEX_KEY_PASSWORD\
+ -Dredex.keySalt=$REDEX_KEY_SALT\
 "
 ```
 
