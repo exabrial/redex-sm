@@ -127,9 +127,11 @@ public class JedisRedisService implements Closeable, RedisService {
 		try {
 			final Map<String, Object> sessionMap;
 			final byte[] sessionKey = SessionChangeset.toEncodedSessionId(keyPrefix, sessionId);
-			if (jedis.exists(sessionKey)) {
+			final Map<byte[], byte[]> encodedMap = jedis.hgetAll(sessionKey);
+			if (encodedMap == null || encodedMap.isEmpty()) {
+				sessionMap = null;
+			} else {
 				sessionMap = new HashMap<>();
-				final Map<byte[], byte[]> encodedMap = jedis.hgetAll(sessionKey);
 				for (final byte[] encodedKey : encodedMap.keySet()) {
 					final String fullKey = new String(encodedKey, StandardCharsets.UTF_8);
 
@@ -169,8 +171,6 @@ public class JedisRedisService implements Closeable, RedisService {
 					}
 					sessionMap.put(key, value);
 				}
-			} else {
-				sessionMap = null;
 			}
 			return sessionMap;
 		} catch (final Exception e) {
