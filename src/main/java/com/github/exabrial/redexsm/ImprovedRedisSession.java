@@ -15,7 +15,6 @@
  */
 package com.github.exabrial.redexsm;
 
-import java.lang.reflect.Field;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
@@ -39,15 +38,9 @@ public class ImprovedRedisSession extends StandardSession {
 
 	protected Map<String, Object> attributeMap;
 
-	@SuppressWarnings("unchecked")
 	protected ImprovedRedisSession(final ImprovedRedisSessionManager manager) {
 		super(manager);
-		try {
-			final Field attributeMapField = StandardSession.class.getDeclaredField("attributes");
-			attributeMap = (Map<String, Object>) attributeMapField.get(this);
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+		attributeMap = this.attributes;
 	}
 
 	protected Map<String, Object> getAttributeMap() {
